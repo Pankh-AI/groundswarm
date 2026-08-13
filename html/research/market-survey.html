@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Groundswarm — Market Survey</title>
+<style>
+  :root{--bg:#0f1115;--fg:#e6e9ef;--dim:#98a2b3;--card:#171a21;--line:#252a34;
+        --good:#3fb950;--bad:#f85149;--warn:#d29922;--acc:#58a6ff}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--fg);
+       font:15px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+  .wrap{max-width:980px;margin:0 auto;padding:28px 20px 80px}
+  h1{font-size:24px;margin:0 0 4px} h2{font-size:18px;margin:32px 0 10px;color:var(--acc)}
+  .dim{color:var(--dim)} .small{font-size:13px}
+  .lead{font-size:15.5px;border-left:3px solid var(--acc);padding-left:14px;margin:16px 0}
+  table{border-collapse:collapse;width:100%;font-size:13.5px;margin:10px 0}
+  .scroll{overflow-x:auto}
+  th,td{border-bottom:1px solid var(--line);padding:8px 9px;text-align:left;vertical-align:top}
+  th{color:var(--dim);font-weight:600;font-size:12px;text-transform:uppercase;letter-spacing:.03em}
+  .tag{display:inline-block;padding:2px 8px;border-radius:99px;font-size:11.5px;font-weight:700}
+  .t-a{background:#3a1414;color:var(--bad)} .t-b{background:#33280a;color:var(--warn)}
+  .t-c{background:#14243a;color:var(--acc)} .t-d{background:#123018;color:var(--good)}
+  code{background:#0b0d11;padding:1px 5px;border-radius:4px;font-size:13px}
+  a{color:var(--acc)}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:16px 18px;margin:14px 0}
+  .src{font-size:13px;color:var(--dim)}
+  .back{font-size:13px;margin-bottom:18px;display:inline-block}
+  .legend{font-size:12.5px;color:var(--dim);margin:6px 0 16px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<a class="back" href="../index.html">&larr; Groundswarm hub</a>
+<h1>Market Survey</h1>
+<div class="dim">Orchestration frameworks &amp; verification/observability companies &middot; compiled 2026-08-13 &middot; two background research agents, model sonnet</div>
+
+<div class="lead">
+Two questions: does any multi-agent orchestration framework ship real output verification, and
+does any evaluation/observability company verify a <b>swarm's combined</b> output against
+<b>live re-fetched</b> primary sources. Nineteen products checked (7 frameworks, 12 eval/observability
+tools). Answer to both: no.
+</div>
+
+<div class="legend">
+Verification depth used below &mdash;
+<span class="tag t-a">(a) none</span> no built-in verification &middot;
+<span class="tag t-a">(a) none</span>
+<span class="tag t-b">(b) LLM critic</span> another LLM judges/reflects on output, no external re-check &middot;
+<span class="tag t-c">(c) human gate</span> human-in-the-loop approval primitive &middot;
+<span class="tag t-d">(d) grounding</span> checked against supplied or executable context, closest to Groundswarm's approach but never against independently re-fetched live sources
+</div>
+
+<h2>Multi-agent orchestration frameworks</h2>
+<div class="scroll"><table><thead>
+<tr><th>Framework</th><th>License / model</th><th>Verification</th><th>Notes</th></tr>
+</thead><tbody>
+<tr><td><b>AutoGen</b> / Microsoft Agent Framework</td><td>MIT, Microsoft-owned, monetized via Azure consumption</td>
+<td><span class="tag t-b">(b) LLM critic</span></td>
+<td>"Reflection" pattern: generator + separate critic agent scores output. No external grounding.</td></tr>
+<tr><td><b>LangGraph</b> (LangChain)</td><td>MIT core; hosted Platform Free/Plus $39/user/mo, Enterprise</td>
+<td><span class="tag t-c">(c) human gate</span></td>
+<td>Checkpointing + human-in-the-loop interrupt nodes. Any grounding is developer-built, nothing shipped by default.</td></tr>
+<tr><td><b>CrewAI</b></td><td>MIT core; Free 50 exec/mo, Pro $25/mo, Enterprise</td>
+<td><span class="tag t-d">(d) grounding</span></td>
+<td>Enterprise-only "Hallucination Guardrail" scores faithfulness 0&ndash;10 against a <i>developer-supplied static</i> reference, not a live re-fetch. Paywalled.</td></tr>
+<tr><td><b>OpenAI Agents SDK</b> (replaced Swarm, Mar 2025)</td><td>MIT, OpenAI-maintained, drives API usage</td>
+<td><span class="tag t-a">(a) none by default</span></td>
+<td>"Guardrails" pipeline hook with a tripwire is genuinely fail-closed as a <i>mechanism</i>, but ships no fact-checking logic; dev must write the validator. Docs list fact-checking only as an example, not a feature.</td></tr>
+<tr><td><b>kyegomez/swarms</b></td><td>Apache 2.0; emerging commercial layer (swarms.ai)</td>
+<td><span class="tag t-b">(b) LLM critic</span></td>
+<td>"HeavySwarm" names a Verification phase, but it validates within the swarm's own internal reasoning, not against external sources.</td></tr>
+<tr><td><b>camel-ai (CAMEL)</b></td><td>Apache 2.0 code, CC BY-NC 4.0 datasets; unfunded OSS + Eigent.ai spinout</td>
+<td><span class="tag t-d">(d) grounding</span></td>
+<td>Cookbook patterns wire a Critic Agent and researcher/Fact-Checker pipelines to live web tools, but these are developer-assembled examples, not a default shipped verifier.</td></tr>
+<tr><td><b>OpenHands</b> (ex-OpenDevin)</td><td>MIT core; Cloud + Polyform Enterprise, $18.8M Series A</td>
+<td><span class="tag t-d">(d) grounding</span></td>
+<td>Most substantive: a QA agent actually executes code to test real behavior against the diff. Grounds against <i>executable</i> ground truth, not textual/factual claims. Human reviewer stays the final gate.</td></tr>
+</tbody></table></div>
+
+<h2>LLM verification / evaluation / observability companies</h2>
+<div class="scroll"><table><thead>
+<tr><th>Product</th><th>Business model</th><th>Unit of evaluation</th></tr>
+</thead><tbody>
+<tr><td><b>Galileo AI</b></td><td>Free 5K traces/mo, Pro $100/mo, Enterprise</td><td>Single call/step via Luna-2 models, real-time guardrail. "Multi-agent" = trace-chain visualization, not reconciliation.</td></tr>
+<tr><td><b>Patronus AI</b></td><td>Sales-led, usage/scope-based</td><td>Percival debugs one agent's own trajectory (20+ failure modes); doesn't cross-check a swarm's combined deliverable.</td></tr>
+<tr><td><b>Vectara (HHEM)</b></td><td>RAG-as-a-service + free open-weights HHEM on Hugging Face</td><td>Classifier scores one source/summary pair. Powers the public HF hallucination leaderboard. Strictly single-document.</td></tr>
+<tr><td><b>Guardrails AI</b></td><td>Open-source core, Pro managed infra, Enterprise</td><td>65+ validators, per-call fail/re-ask on one response. No swarm or live-source check.</td></tr>
+<tr><td><b>TruEra</b></td><td>Acquired by Snowflake May 2024; TruLens OSS lives on inside Cortex</td><td>No longer independent. Single-app observability, folded into Snowflake.</td></tr>
+<tr><td><b>Arize AI (Phoenix/AX)</b></td><td>Phoenix free/OSS; AX Free/Pro $50/mo/Enterprise ~$60K+/yr</td><td>Explicitly supports "multi-agent graphs" &mdash; but it's span-level tracing of one orchestrated run, not independent re-verification.</td></tr>
+<tr><td><b>LangSmith</b></td><td>Free 5K traces, Plus $39/seat/mo, Enterprise</td><td>Scores one agent's captured trajectory/tool calls. No swarm-output reconciliation.</td></tr>
+<tr><td><b>Braintrust</b></td><td>Free 1GB/10K scores, Pro ~$249/mo, Enterprise</td><td>Request-response pairs, weaker multi-step trace depth than peers; still single-run-scoped.</td></tr>
+<tr><td><b>HoneyHive</b></td><td>$7.4M raised (Insight Partners), pricing undisclosed</td><td>Traces one agent's decision journey. No swarm/live-source claims found.</td></tr>
+<tr><td><b>DeepEval / Confident AI</b></td><td>DeepEval Apache-2.0 (closest license precedent to Groundswarm); hosted Free/Starter $9.99/user/Enterprise</td><td>50+ metrics, but scores individual test cases/traces, not swarm-combined output vs. live sources.</td></tr>
+<tr><td><b>Ragas</b></td><td>Open-source, free, YC-backed</td><td>Closest conceptually ("check against sources"), but scores one retrieval+generation pair's faithfulness only.</td></tr>
+<tr><td><b>Lakera</b></td><td>Acquired by Check Point 2025, sales-gated Enterprise</td><td>Runtime prompt-injection/jailbreak firewall. Not an output or source-fidelity evaluator at all.</td></tr>
+</tbody></table></div>
+
+<div class="card">
+<b>Dead end worth noting:</b> Humanloop was acquired (acqui-hire) by Anthropic in August 2025 and
+the platform itself was sunset September 8, 2025; assets/IP not retained. It's gone from the
+competitive set entirely, not a live comparison point.
+</div>
+
+<h2>Headline finding</h2>
+<div class="card">
+Across all 19 products checked, none perform independent verification of a <b>multi-agent
+swarm's combined output</b> against <b>freshly re-fetched live primary sources</b>. Every
+product's unit of evaluation is a single LLM call, a single agent's trace, or a single
+conversational turn, even tools marketed with "agent" or "multi-agent" language are tracing
+multiple steps <i>inside one orchestrated run</i>, not independently reconciling many workers'
+contributions into one fact-checked result. Full synthesis into a positioning SWOT is on the
+<a href="../strategy/swot.html">SWOT page</a>.
+</div>
+
+<div class="src">Sources: two background research agents (model sonnet), 21 + 19 tool calls, ~138s + ~147s, 69.3k + 68.8k tokens. Full citations in the agents' own reports; see <a href="../audit/research-log.html">audit log</a> for the run record.</div>
+
+</div>
+</body>
+</html>

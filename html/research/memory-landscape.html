@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Groundswarm — Memory Landscape</title>
+<style>
+  :root{--bg:#0f1115;--fg:#e6e9ef;--dim:#98a2b3;--card:#171a21;--line:#252a34;
+        --good:#3fb950;--bad:#f85149;--warn:#d29922;--acc:#58a6ff}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--fg);
+       font:15px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+  .wrap{max-width:980px;margin:0 auto;padding:28px 20px 80px}
+  h1{font-size:24px;margin:0 0 4px} h2{font-size:18px;margin:32px 0 10px;color:var(--acc)}
+  .dim{color:var(--dim)} .small{font-size:13px}
+  .lead{font-size:15.5px;border-left:3px solid var(--acc);padding-left:14px;margin:16px 0}
+  table{border-collapse:collapse;width:100%;font-size:13.5px;margin:10px 0}
+  .scroll{overflow-x:auto}
+  th,td{border-bottom:1px solid var(--line);padding:8px 9px;text-align:left;vertical-align:top}
+  th{color:var(--dim);font-weight:600;font-size:12px;text-transform:uppercase;letter-spacing:.03em}
+  .tag{display:inline-block;padding:2px 8px;border-radius:99px;font-size:11.5px;font-weight:700}
+  .yes{color:var(--good)} .no{color:var(--bad)} .partial{color:var(--warn)}
+  code{background:#0b0d11;padding:1px 5px;border-radius:4px;font-size:13px}
+  a{color:var(--acc)}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:16px 18px;margin:14px 0}
+  .src{font-size:13px;color:var(--dim)}
+  .back{font-size:13px;margin-bottom:18px;display:inline-block}
+  .gap{background:#0f2216;border-color:#1c3f26}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<a class="back" href="../index.html">&larr; Groundswarm hub</a>
+<h1>Memory Landscape</h1>
+<div class="dim">Competitive check for the proposed Memory component &middot; compiled 2026-08-13 &middot; background research agent, model sonnet</div>
+
+<div class="lead">
+Five specific design properties were checked against the existing agent-memory product and
+research landscape: validity/blast-radius scoping independent of authorship, a deterministic
+non-LLM pre-merge validator, review-gated high-stakes writes, tiered token-cost-aware loading, and
+explicit TTL/supersedes staleness. Twelve products and two 2026 research papers checked. No
+product or proposal combines all five. See <a href="../decisions/adr-index.html">ADR-007</a> for
+how this feeds back into the architecture.
+</div>
+
+<h2>Property-by-property</h2>
+<div class="scroll"><table><thead>
+<tr><th>Product</th><th>License / model</th><th>Validity scoping</th><th>Deterministic gate</th><th>TTL / supersedes</th><th>Tiered loading</th></tr>
+</thead><tbody>
+<tr><td><b>Mem0</b></td><td>Apache-2.0 core, hosted $0&ndash;$249+/mo</td>
+<td><span class="tag no">No</span> scopes by owner (user/agent/run/org id), not by validity</td>
+<td><span class="tag no">No</span> LLM-driven "Dream" consolidation; scored 18% on a fact-conflict benchmark</td>
+<td><span class="tag partial">Partial</span> real TTL field, no supersedes/provenance links</td>
+<td><span class="tag no">No</span> similarity search per scope only</td></tr>
+<tr><td><b>Letta</b> (MemGPT)</td><td>Apache-2.0, freemium Cloud</td>
+<td><span class="tag no">No</span> read-only shared blocks are coarse RBAC, not a scope hierarchy</td>
+<td><span class="tag no">No</span> concurrent writes are last-write-wins</td>
+<td><span class="tag no">No</span></td>
+<td><span class="tag yes">Yes</span> Core/Recall/Archival split is the closest real match to this property in the field</td></tr>
+<tr><td><b>Zep / Graphiti</b></td><td>Zep Cloud closed, $0&ndash;$475/mo; Graphiti engine Apache-2.0</td>
+<td><span class="tag no">No</span> user-graph vs group-graph only</td>
+<td><span class="tag no">No</span> invalidation decided by an LLM prompt; scored 7% on the same fact-conflict benchmark</td>
+<td><span class="tag yes">Yes</span> bi-temporal edges are the most rigorous staleness model checked</td>
+<td><span class="tag no">No</span></td></tr>
+<tr><td><b>LangMem / LangGraph Store</b></td><td>MIT</td>
+<td><span class="tag partial">Partial</span> developer-defined namespaces could encode a hierarchy, nothing opinionated shipped</td>
+<td><span class="tag no">No</span></td>
+<td><span class="tag yes">Yes</span> shipped <code>default_ttl</code>, <code>refresh_on_read</code>, sweep interval</td>
+<td><span class="tag no">No</span> left to the app builder</td></tr>
+<tr><td><b>CrewAI</b></td><td>MIT core + Enterprise</td>
+<td><span class="tag no">No</span> LLM-inferred scope/importance at save time</td>
+<td><span class="tag no">No</span></td>
+<td><span class="tag no">No</span></td>
+<td><span class="tag no">No</span></td></tr>
+<tr><td><b>Cognee</b></td><td>Apache-2.0 core + managed cloud</td>
+<td><span class="tag no">No</span> RBAC gates who may write, not a validity model</td>
+<td><span class="tag partial">Partial</span> permission checks exist but aren't a content-invariant validator</td>
+<td><span class="tag partial">Partial</span> usage-based auto-pruning, not explicit TTL+supersedes</td>
+<td><span class="tag no">No</span></td></tr>
+<tr><td><b>Mastra</b></td><td>&mdash;</td>
+<td><span class="tag no">No</span> thread/resource(user) scoped only</td>
+<td><span class="tag no">No</span></td>
+<td><span class="tag no">No</span></td>
+<td><span class="tag no">No</span></td></tr>
+<tr><td><b>AWS Bedrock AgentCore / Google Vertex Memory Bank</b></td><td>Proprietary managed</td>
+<td><span class="tag no">No</span> session/actor or per-user only, no team/org sharing at all</td>
+<td><span class="tag no">No</span></td>
+<td><span class="tag no">No</span> documented</td>
+<td><span class="tag no">No</span></td></tr>
+</tbody></table></div>
+
+<h2>The two closest research proposals</h2>
+<div class="card">
+<b><a href="https://arxiv.org/abs/2606.01138">memorywire</a></b> (arXiv 2606.01138, May 2026,
+single-author, unreviewed) specifies an optional human-in-the-loop governance channel with
+diff-and-approve workflows before writes enter long-term storage, the closest conceptual match to
+a review gate for high-stakes writes. But it's human review only, no deterministic
+invariant-checker, and it doesn't define org/team/project/run validity scoping.
+<p><b><a href="https://arxiv.org/abs/2606.01435">"Don't Ask the LLM to Track Freshness"</a></b>
+(arXiv 2606.01435, May 2026) argues explicitly that the field is under-serving deterministic,
+version-aware conflict resolution, direct evidence that researchers already see this as an open
+problem, not something quietly solved.</p>
+</div>
+
+<h2>Why the deterministic-gate choice specifically matters</h2>
+<div class="card gap">
+This is the sharpest finding: an independent 2026 benchmark on single-hop fact-conflict
+consolidation scored <b>Mem0 at 18%</b> and <b>Zep/Graphiti at 7%</b>, both rely on an LLM to
+decide whether a new fact supersedes an old one, and both fail on that task most of the time. This
+isn't a hypothetical argument for a deterministic gate over an LLM-trust model, it's a measured
+failure rate in the two most mature products checked. It directly supports the same design
+principle the <a href="./literature-survey.html">literature survey</a> found for the verifier
+(AbstentionBench: LLM judges don't reliably know when to decline), applied here to memory writes
+instead of task output.
+</div>
+
+<h2>Conclusion</h2>
+<div class="card">
+No shipped product or well-known research proposal combines all five properties. Each piece has
+precedent somewhere, Letta's tiering, Graphiti's bi-temporal staleness model, LangGraph's TTL,
+memorywire's human-review channel, but nobody stitches them together, and the two products with
+the most mature consolidation logic (Mem0, Zep) both lean on LLM judgment for exactly the
+conflict-resolution step Groundswarm's design proposes to make deterministic, and both measurably
+struggle at it. That's a genuine, evidenced gap, not an inflated one. It is still an unbuilt
+proposal, not working code, see <a href="../decisions/adr-index.html">ADR-007</a> for status.
+</div>
+
+<div class="src">Source: background research agent (model sonnet), 25 tool calls, ~222s, 77.2k tokens. Full citation list in the agent's own report; see <a href="../audit/research-log.html">audit log</a> for the run record.</div>
+
+</div>
+</body>
+</html>

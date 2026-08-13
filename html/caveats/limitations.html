@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Groundswarm — Limitations</title>
+<style>
+  :root{--bg:#0f1115;--fg:#e6e9ef;--dim:#98a2b3;--card:#171a21;--line:#252a34;
+        --good:#3fb950;--bad:#f85149;--warn:#d29922;--acc:#58a6ff}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--fg);
+       font:15px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+  .wrap{max-width:920px;margin:0 auto;padding:28px 20px 80px}
+  h1{font-size:24px;margin:0 0 4px} h2{font-size:16px;margin:0 0 6px}
+  .dim{color:var(--dim)} .small{font-size:13px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:16px 18px;margin:14px 0}
+  a{color:var(--acc)}
+  .back{font-size:13px;margin-bottom:18px;display:inline-block}
+  code{background:#0b0d11;padding:1px 5px;border-radius:4px;font-size:13px}
+  .lead{font-size:15.5px;border-left:3px solid var(--acc);padding-left:14px;margin:16px 0}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<a class="back" href="../index.html">&larr; Groundswarm hub</a>
+<h1>Limitations</h1>
+<div class="dim">What this research round does and does not establish</div>
+
+<div class="lead">
+This page exists so the SWOT and market survey don't get read as more settled than they are.
+Four specific gaps, and one process note on what wasn't looked up and why.
+</div>
+
+<div class="card">
+<h2>No benchmark validates the core bet</h2>
+The literature survey found no existing benchmark that scores "genuinely grounded vs. merely
+plausible" for multi-agent output specifically. The strongest evidence Groundswarm's approach
+works is the internal capstone prototype (63 claims, 41 checks, tested against real and
+deliberately empty submissions), not a peer-reviewed or third-party result. That's a real gap
+between "the idea is validated" and "the idea is unrefuted so far."
+</div>
+
+<div class="card">
+<h2>Fail-closed judging is confirmed hard, not solved</h2>
+AbstentionBench (cited in the <a href="../research/literature-survey.html">literature survey</a>)
+found abstention does not improve with model scale, models keep guessing when they should
+decline. This means the verifier's deterministic re-fetch/round-trip layer has to carry the real
+weight of "fail closed," the LLM judge is a secondary check, not the primary guarantee. Treating
+the LLM judge as sufficient on its own would contradict the literature this project is building on.
+</div>
+
+<div class="card">
+<h2>Trademark clearance is incomplete</h2>
+The name-availability check (GitHub, npm, PyPI, web search, DNS) came back clear, but no formal
+USPTO/EUIPO/WIPO trademark database search was run. That matters more once the planned Enterprise
+edition is real revenue, not before. See <a href="../research/similar-projects.html">similar-projects
+research</a> for exactly what was and wasn't checked.
+</div>
+
+<div class="card">
+<h2>Memory component is a confirmed gap, not built code</h2>
+The competitive check against Mem0, Letta, Zep/Graphiti, LangMem, CrewAI, Cognee, Mastra, and two
+managed cloud offerings (see <a href="../research/memory-landscape.html">memory landscape
+research</a>) found no product or research proposal combines Memory's five design properties.
+That's evidence the design targets a real gap, not evidence the design works, none of it is
+implemented yet, and "no existing product does this" is not the same claim as "this will work
+when built." The gap is real; the execution risk is still entirely ahead of it.
+</div>
+
+<div class="card">
+<h2>Enterprise pricing/feature detail is genuinely thin</h2>
+Several competitors (Patronus, HoneyHive, OpenHands Enterprise) don't publish pricing or full
+feature scope; the market survey reports what's publicly available, not a complete picture. Any
+competitive claim about "Groundswarm Enterprise vs. X Enterprise" made later should re-verify
+against current public info rather than reuse this snapshot.
+</div>
+
+<div class="card">
+<h2>GitHub portfolio cross-check deliberately not performed</h2>
+The original research request included checking the project owner's own GitHub activity for
+relevant context. No GitHub remote is configured on this local repository, and pursuing this
+further would have meant either guessing a public identity from a common name or using
+git-config-derived personal data that was flagged as sensitive and out of scope for this research.
+Deferred pending an actual public handle supplied directly, not attempted here. No personal
+identifying information was used in, or is present in, any file on this page or elsewhere in this
+research round.
+</div>
+
+</div>
+</body>
+</html>

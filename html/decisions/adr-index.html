@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Groundswarm — Decisions</title>
+<style>
+  :root{--bg:#0f1115;--fg:#e6e9ef;--dim:#98a2b3;--card:#171a21;--line:#252a34;
+        --good:#3fb950;--bad:#f85149;--warn:#d29922;--acc:#58a6ff}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--fg);
+       font:15px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+  .wrap{max-width:920px;margin:0 auto;padding:28px 20px 80px}
+  h1{font-size:24px;margin:0 0 4px} h2{font-size:16px;margin:0 0 6px}
+  .dim{color:var(--dim)} .small{font-size:13px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:16px 18px;margin:14px 0}
+  .tag{display:inline-block;padding:2px 8px;border-radius:99px;font-size:11.5px;font-weight:700}
+  .t-dec{background:#123018;color:var(--good)} .t-open{background:#33280a;color:var(--warn)}
+  code{background:#0b0d11;padding:1px 5px;border-radius:4px;font-size:13px}
+  a{color:var(--acc)}
+  .back{font-size:13px;margin-bottom:18px;display:inline-block}
+  .meta{font-size:12.5px;color:var(--dim);margin-bottom:8px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<a class="back" href="../index.html">&larr; Groundswarm hub</a>
+<h1>Decisions</h1>
+<div class="dim">Architecture and licensing decisions made so far, and what's still open</div>
+
+<div class="card">
+<div class="meta">ADR-001 <span class="tag t-dec">Decided</span></div>
+<h2>Base the worker runtime on OpenClaw, don't build a new agent runtime</h2>
+Groundswarm workers are OpenClaw instances (<a href="https://github.com/openclaw/openclaw">github.com/openclaw/openclaw</a>,
+MIT-licensed), not a new distribution/channel layer built from scratch.
+<p><b>Why:</b> OpenClaw already solves distribution to WhatsApp, Slack, Discord, Telegram and
+iMessage through its Gateway and channel connectors, and it's genuinely open (MIT), unlike the
+SwarmBench Harbor task-package conventions this project must not reuse. Groundswarm does not
+modify or relicense OpenClaw itself.</p>
+</div>
+
+<div class="card">
+<div class="meta">ADR-002 <span class="tag t-dec">Decided</span></div>
+<h2>Name the project "Groundswarm", not anything Claude-adjacent</h2>
+Rejected names in the "SwarmClaw" / "AgentSwarm-as-Claude-pun" family.
+<p><b>Why:</b> Anthropic sent OpenClaw's creator a cease-and-desist over its original "Clawd"
+branding (2026-01-27) specifically over Claude-adjacent naming. Building on OpenClaw already
+carries some inherited brand risk; compounding it with a Claude-adjacent project name was an
+avoidable mistake. Name-availability check (GitHub/npm/PyPI/domains) came back clear, see
+<a href="../research/similar-projects.html">similar-projects research</a>.</p>
+</div>
+
+<div class="card">
+<div class="meta">ADR-003 <span class="tag t-dec">Decided</span></div>
+<h2>Open-core licensing: Apache-2.0 core, separate future paid Enterprise edition</h2>
+Groundswarm's own code (orchestrator + verifier) ships under Apache License 2.0, free for
+individuals and organizations of any size. A future, separate "Groundswarm Enterprise" edition
+(SSO, audit/compliance reporting, managed hosting, support SLAs) is planned under a commercial
+license; the core engine is never gated behind it.
+<p><b>Why:</b> matches the closest credible precedent found in the market survey (DeepEval /
+Confident AI's open-core model) rather than a source-available/BSL-style license, which avoids
+both the legal complexity and the community-trust friction that relicensing disputes have caused
+elsewhere in this space.</p>
+</div>
+
+<div class="card">
+<div class="meta">ADR-004 <span class="tag t-dec">Decided</span></div>
+<h2>Copyright holder: Pankh-AI</h2>
+<code>LICENSE</code> now reads <code>Copyright 2026 Pankh-AI</code>.
+<p><b>Why:</b> published as company work under the Pankh-AI org rather than an individual
+contributor, both to reflect where the work actually happens and so the project can be claimed as
+Pankh-AI's going forward. Confirmed directly, not inferred, the local git identity on this machine
+never matched the name this project should be published under and was deliberately not used.</p>
+</div>
+
+<div class="card">
+<div class="meta">ADR-005 <span class="tag t-open">Open</span></div>
+<h2>First proof-case domain</h2>
+README currently proposes vendor infrastructure incident monitoring (the same domain the
+grounding pattern was proven on in the capstone) as the first real Groundswarm use case, marked
+explicitly as "proposed, open to change."
+<p><b>Why open:</b> not yet confirmed or overridden.</p>
+</div>
+
+<div class="card">
+<div class="meta">ADR-006 <span class="tag t-dec">Decided</span></div>
+<h2>Orchestrator and verifier implementation language: Python</h2>
+New Groundswarm code (orchestrator + verifier) is Python, not Rust.
+<p><b>Why:</b> the proven capstone verifier is already Python and directly reusable rather than a
+rewrite; every framework and eval tool surveyed in the market research (AutoGen, LangGraph,
+CrewAI, swarms, camel-ai, OpenHands, DeepEval, Ragas) is Python-first, maximizing contributor
+overlap with exactly the ecosystem this project draws from; and the actual workload (LLM calls,
+live source re-fetching) is I/O-bound, not CPU-bound, so Rust's performance edge would not show up
+in practice. A narrow hot path can get a targeted extension later if one is ever actually needed.</p>
+</div>
+
+<div class="card">
+<div class="meta">ADR-007 <span class="tag t-dec">Decided: build it. Confirmed gap, not yet implemented</span></div>
+<h2>Add Memory as a fourth component: a scoped, verified shared knowledge store</h2>
+Fourth component alongside Workers, Orchestrator and Verifier, entries scoped by validity/blast
+radius (org-wide / team / project / single-run) rather than by which worker wrote them, gated by
+a deterministic pre-merge validator rather than trust in the last writer, tiered
+always-loaded-vs-on-demand retrieval as an explicit token-cost budget, and explicit TTL /
+supersedes staleness handling. Drafted into <a href="../../README.md">README</a>.
+<p><b>Why:</b> reuses the verifier's own trust primitive (deterministic gate first, fail closed
+on ambiguity) applied to the swarm's shared knowledge instead of its task output, a coherent
+extension rather than a bolted-on feature. Generalized from operating a real single-user instance
+of the same pattern across many long-lived projects, not from a graded benchmark the way the
+verifier's pattern was.</p>
+<p><b>Competitive check, done:</b> checked against Mem0, Letta, Zep/Graphiti, LangMem, CrewAI,
+Cognee, Mastra, AWS Bedrock AgentCore Memory, and Google Vertex Memory Bank, plus two 2026
+research proposals. No product or proposal combines all five properties; each solves one piece
+(Letta's tiering, Graphiti's bi-temporal staleness, LangGraph's TTL, memorywire's human-review
+channel) and leaves the rest to the app developer or an LLM's judgment. Sharper still: a 2026
+fact-conflict benchmark scored Mem0 at 18% and Zep/Graphiti at 7%, both lean on an LLM to decide
+whether a new fact supersedes an old one, and both measurably fail at it most of the time, direct
+evidence for the deterministic-gate choice, not just an assumption. Full writeup:
+<a href="../research/memory-landscape.html">memory landscape research</a>.</p>
+</div>
+
+<div class="card">
+<div class="meta">ADR-008 <span class="tag t-dec">Decided</span></div>
+<h2>Publish under the Pankh-AI GitHub org, as its own isolated repo</h2>
+Groundswarm publishes as company work under an existing Pankh-AI GitHub org, not an individual
+account. The Pankh-AI org already has other repos on it, possibly including private ones.
+<p><b>Verified locally:</b> <code>groundswarm/</code> is currently untracked inside this
+<code>Research</code> working directory, which is a single git repository (37 commits, no remote
+configured) that also contains kaggriculture's live competition strategy and other private
+research. Zero commits reference <code>groundswarm/</code> so far, and its README/LICENSE/html
+contain no references to any other project in this workspace.</p>
+<p><b>Why this matters:</b> <code>Research</code> itself must never get a remote, public or
+otherwise, its history alone would expose unrelated private work regardless of what folder
+someone meant to publish. Groundswarm has to become its own freshly-initialized repository in a
+separate location before anything is pushed anywhere.</p>
+<p><b>Before the first push (unverified locally, needs a human check on GitHub):</b> confirm the
+Pankh-AI org's default new-repo visibility setting so Groundswarm doesn't inherit a stricter or
+looser default than intended, and confirm no org-wide Actions secrets are configured in a way a
+public repo's workflows could read, before any CI is wired up for this repo.</p>
+</div>
+
+</div>
+</body>
+</html>

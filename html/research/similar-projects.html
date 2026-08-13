@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Groundswarm — Similar Projects &amp; Name Check</title>
+<style>
+  :root{--bg:#0f1115;--fg:#e6e9ef;--dim:#98a2b3;--card:#171a21;--line:#252a34;
+        --good:#3fb950;--bad:#f85149;--warn:#d29922;--acc:#58a6ff}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--fg);
+       font:15px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+  .wrap{max-width:920px;margin:0 auto;padding:28px 20px 80px}
+  h1{font-size:24px;margin:0 0 4px} h2{font-size:18px;margin:32px 0 10px;color:var(--acc)}
+  .dim{color:var(--dim)} .small{font-size:13px}
+  .lead{font-size:15.5px;border-left:3px solid var(--acc);padding-left:14px;margin:16px 0}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:16px 18px;margin:14px 0}
+  .tag{display:inline-block;padding:2px 8px;border-radius:99px;font-size:11.5px;font-weight:700}
+  .t-clear{background:#123018;color:var(--good)} .t-gap{background:#33280a;color:var(--warn)}
+  code{background:#0b0d11;padding:1px 5px;border-radius:4px;font-size:13px}
+  a{color:var(--acc)}
+  .src{font-size:13px;color:var(--dim)}
+  .back{font-size:13px;margin-bottom:18px;display:inline-block}
+  table{border-collapse:collapse;width:100%;font-size:13.5px;margin:10px 0}
+  .scroll{overflow-x:auto}
+  th,td{border-bottom:1px solid var(--line);padding:8px 9px;text-align:left;vertical-align:top}
+  th{color:var(--dim);font-weight:600;font-size:12px;text-transform:uppercase;letter-spacing:.03em}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<a class="back" href="../index.html">&larr; Groundswarm hub</a>
+<h1>Similar Projects &amp; Name Availability</h1>
+<div class="dim">Inspiration search + "Groundswarm" collision check &middot; compiled 2026-08-13 &middot; background research agent, model sonnet</div>
+
+<div class="lead">
+Honest finding: no mature open-source project combines both halves of Groundswarm's idea. The
+space splits into two clusters that don't overlap, swarm orchestration with no verification, and
+fact-verification research with no swarm scale, and nothing bridges them yet.
+</div>
+
+<h2>Cluster A &mdash; mature swarm orchestration, zero verification</h2>
+<div class="card">
+<a href="https://github.com/kyegomez/swarms">kyegomez/swarms</a> (7,043&#9733;, 986 forks, commits
+as recent as the day this was checked) and
+<a href="https://github.com/VRSEN/agency-swarm">VRSEN/agency-swarm</a> (4,520&#9733;, last push
+Aug 3) are active, well-adopted frameworks for running many concurrent agents. Neither ships any
+fact-checking, grounding, or fail-closed judging, it's pure orchestration plumbing (concurrency,
+topology, tool-calling), and leaving verification out appears to be a deliberate scope choice by
+the maintainers, not an oversight.
+</div>
+
+<h2>Cluster B &mdash; fact-verification multi-agent research, not swarms, mostly dormant</h2>
+<div class="card">
+Academic "multi-agent debate for fact verification" work is the closest conceptual match:
+<a href="https://arxiv.org/abs/2601.04742">Tool-MAD</a> (debaters each get a distinct retrieval
+tool, +35.5% over static-evidence debate) and FC-MAD /
+<a href="https://www.researchgate.net/publication/396967155_MAD-Fact_A_Multi-Agent_Debate_Framework_for_Long-Form_Factuality_Evaluation_in_LLMs">MAD-Fact</a>
+use judge-guided consensus over 2&ndash;5 agents, but these are papers with no public repos.
+<div class="scroll"><table><thead><tr><th>Repo</th><th>Stars</th><th>Last activity</th></tr></thead><tbody>
+<tr><td><a href="https://github.com/muthuspark/multi-agent-debate">muthuspark/multi-agent-debate</a></td><td>3</td><td>Untouched since Oct 2025</td></tr>
+<tr><td><a href="https://github.com/anushkasingh-code/multi-agent-fact-verification">anushkasingh-code/multi-agent-fact-verification</a></td><td>0</td><td>Created Jul 25 2026, last push Jul 26</td></tr>
+<tr><td><a href="https://github.com/ashg2099/Sift">ashg2099/Sift</a></td><td>2</td><td>Dormant since May 2026</td></tr>
+</tbody></table></div>
+None of these run more than a handful of agents. Adjacent but not a match:
+<a href="https://gptr.dev/">GPT Researcher</a> / STORM run parallel research agents but treat
+"more sources scraped" as their accuracy mechanism, not an independent adversarial re-check. The
+2026 "Cited but Not Verified" benchmark (also surfaced in the <a href="./literature-survey.html">literature
+survey</a>) found even leading deep-research products land at only 78&ndash;94% citation accuracy,
+a useful yardstick showing this problem is real and unsolved by well-funded labs, not a niche gap.
+</div>
+
+<h2>What Groundswarm could take from each</h2>
+<div class="card">
+Borrow concurrency/isolation patterns from swarms/agency-swarm, they've solved running many
+workers reliably. Borrow the tool-augmented, judge-guided debate structure from Tool-MAD/FC-MAD
+for the verifier's internal design. But expect to implement published techniques from scratch,
+not adopt a library, since nothing production-grade exists to fork. This is genuine white space
+with no existing playbook: real differentiation, but real execution risk too.
+</div>
+
+<h2>"Groundswarm" name availability</h2>
+<span class="tag t-clear">Looks clear</span>
+<div class="card">
+<b>GitHub:</b> no user or org named <code>groundswarm</code> (404). Repo search returns exactly
+one hit, <a href="https://github.com/LikeSmith/Sim-GroundSwarm">LikeSmith/Sim-GroundSwarm</a>, an
+unrelated C++ robotics simulator by an individual, different spelling, no real conflict.<br>
+<b>npm:</b> package and org <code>groundswarm</code> both unregistered.<br>
+<b>PyPI:</b> package <code>groundswarm</code> unregistered.<br>
+<b>Web search:</b> no company, product, or OSS project found using "Groundswarm" exactly.
+Nearby-but-distinct names exist, Groundswell (clean-energy nonprofit), GroundsWell AI
+(sales-copilot at trygroundswell.com), Swarmbotics AI (physical robot swarms), none close enough
+to be a real naming conflict.<br>
+<b>Domains:</b> DNS lookups for <code>groundswarm.ai</code>, <code>groundswarm.io</code>, and
+<code>groundswarm.dev</code> all returned NXDOMAIN with no delegation records, a good signal none
+are currently registered, though this isn't a formal WHOIS/registrar check.
+</div>
+
+<div class="card">
+<span class="tag t-gap">Gap not closed</span> No formal USPTO/EUIPO/WIPO trademark database
+search was run, casual web search surfaced nothing, but that's not a clearance search.
+<b>Recommendation:</b> claim the domains and the GitHub org promptly given the name is free right
+now, and run a formal trademark check before any commercial commitment (matters more once an
+Enterprise edition is real revenue, per the <a href="../README.md">license plan</a>).
+</div>
+
+<div class="src">Source: background research agent (model sonnet), 29 tool calls, ~249s, 80.4k tokens. See <a href="../audit/research-log.html">audit log</a> for the run record.</div>
+
+</div>
+</body>
+</html>

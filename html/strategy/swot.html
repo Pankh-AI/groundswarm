@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Groundswarm — SWOT</title>
+<style>
+  :root{--bg:#0f1115;--fg:#e6e9ef;--dim:#98a2b3;--card:#171a21;--line:#252a34;
+        --good:#3fb950;--bad:#f85149;--warn:#d29922;--acc:#58a6ff}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--fg);
+       font:15px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+  .wrap{max-width:980px;margin:0 auto;padding:28px 20px 80px}
+  h1{font-size:24px;margin:0 0 4px} h2{font-size:17px;margin:0 0 8px}
+  .dim{color:var(--dim)} .small{font-size:13px}
+  .lead{font-size:15.5px;border-left:3px solid var(--acc);padding-left:14px;margin:16px 0}
+  a{color:var(--acc)}
+  code{background:#0b0d11;padding:1px 5px;border-radius:4px;font-size:13px}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:20px 0}
+  @media (max-width:700px){.grid{grid-template-columns:1fr}}
+  .cell{border-radius:10px;padding:16px 18px;border:1px solid var(--line)}
+  .s{background:#0f2216;border-color:#1c3f26}
+  .w{background:#2a1414;border-color:#4a1f1f}
+  .o{background:#14243a;border-color:#1f3a5c}
+  .t{background:#2a2008;border-color:#4a3a10}
+  .cell h2{margin-top:0}
+  .s h2{color:var(--good)} .w h2{color:var(--bad)} .o h2{color:var(--acc)} .t h2{color:var(--warn)}
+  ul{padding-left:20px;margin:6px 0}
+  li{margin:8px 0}
+  .back{font-size:13px;margin-bottom:18px;display:inline-block}
+  .src{font-size:13px;color:var(--dim);margin-top:24px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<a class="back" href="../index.html">&larr; Groundswarm hub</a>
+<h1>SWOT</h1>
+<div class="dim">First-pass positioning analysis, synthesized from the literature and market surveys &middot; compiled 2026-08-13</div>
+
+<div class="lead">
+Every point below traces to a specific finding in the <a href="../research/literature-survey.html">literature
+survey</a> or <a href="../research/market-survey.html">market survey</a>, not a generic
+framework-shaped claim. Where the evidence is thin, it's flagged as thin rather than smoothed over.
+</div>
+
+<div class="grid">
+
+<div class="cell s">
+<h2>Strengths</h2>
+<ul>
+<li>OpenClaw (MIT, actively governed by the OpenClaw Foundation) gives free, legitimate
+distribution across WhatsApp, Slack, Discord, Telegram and iMessage on day one, not something a
+from-scratch agent framework has out of the box.</li>
+<li>The core bet targets a confirmed open gap: of 19 orchestration frameworks and eval/observability
+products checked, none independently re-fetch live sources to verify a <b>swarm's combined</b>
+output with fail-closed semantics. Every one is no-verification, LLM-critic-only, human-gated, or
+checked only against a static developer-supplied context.</li>
+<li>The grounding pattern (deterministic checks + fail-closed LLM judge) is already prototyped end
+to end, 7 instruments, 63 claims, 41 independent checks, tested against real and deliberately
+empty submissions. This is working code, not a paper idea.</li>
+<li>Apache-2.0 open-core matches the closest credible license precedent found (DeepEval /
+Confident AI), not a more legally fraught source-available model.</li>
+<li>The proposed Memory component targets a second confirmed gap: checked against 9 agent-memory
+products (Mem0, Letta, Zep/Graphiti, LangMem, CrewAI, Cognee, Mastra, AWS Bedrock AgentCore
+Memory, Google Vertex Memory Bank) plus 2 research proposals, none combine validity/blast-radius
+scoping, a deterministic pre-merge gate, tiered token-aware loading, and explicit TTL/supersedes
+staleness. See <a href="../research/memory-landscape.html">memory landscape research</a>.</li>
+</ul>
+</div>
+
+<div class="cell w">
+<h2>Weaknesses</h2>
+<ul>
+<li>Zero users, zero orchestrator/verifier code beyond the single-domain capstone prototype;
+current status is architecture and licensing decisions only.</li>
+<li>Downstream dependence on OpenClaw for the worker runtime: its own governance, its own release
+cadence, and its own inherited reputational risk (it has already drawn one cease-and-desist over
+branding, see Threats).</li>
+<li>The literature confirms fail-closed LLM-judging is genuinely unsolved (AbstentionBench:
+abstention does not improve with model scale). The hardest part of the roadmap has no solved
+recipe to lean on.</li>
+<li>No third-party or peer-reviewed benchmark validates "swarm verification beats swarm without
+verification" end to end; the strongest evidence is the internal 63-claim prototype.</li>
+</ul>
+</div>
+
+<div class="cell o">
+<h2>Opportunities</h2>
+<ul>
+<li>MAST (1,600+ real traces, 7 frameworks) found "task verification" failures as one of three
+major failure categories in production multi-agent systems, this pain is independently measured,
+not hypothetical.</li>
+<li>The Hallucination Cascade paper shows swarms getting less factually accurate while looking
+more coherent as agents chain, a citable, differentiating data point for a "fails closed rather
+than falsely confident" pitch.</li>
+<li>OpenHands' own "Verification Stack" post shows a funded competitor ($18.8M Series A) already
+sees verification as a wedge feature, but its version only checks code-execution behavior, not
+textual/factual claims, leaving the equivalent for document-grounded work open.</li>
+<li>A 2026 fact-conflict benchmark scored the two most mature agent-memory products at resolving
+conflicting facts correctly only 18% of the time (Mem0) and 7% of the time (Zep/Graphiti), both
+rely on an LLM to decide whether a new fact supersedes an old one. That's measured evidence for
+Memory's deterministic-gate design, not just an assumption, and a concrete, quotable number for
+why "trust the last agent's judgment" memory systems break down in practice.</li>
+<li>No benchmark exists yet for "verified vs. merely plausible" multi-agent output. Publishing one
+first, seeded from the capstone's methodology, would be genuine citable research output and a
+strong open-source community hook, not just a product pitch.</li>
+</ul>
+</div>
+
+<div class="cell t">
+<h2>Threats</h2>
+<ul>
+<li>Well-funded incumbents (Microsoft Agent Framework, LangChain/LangGraph, OpenAI Agents SDK)
+could ship "good enough" grounding at any time on existing distribution. OpenAI's Guardrails
+pipeline is already architecturally fail-closed-capable; it just ships no fact-checking logic
+today, that gap could close without warning.</li>
+<li>Anthropic issued a cease-and-desist against OpenClaw's original "Clawd" branding
+(2026-01-27) for Claude-adjacent naming. Groundswarm avoided that specific mistake in its own
+name, but every future UI/marketing choice needs the same discipline given the dependency.</li>
+<li>kyegomez/swarms' maintainer has public, unverified plagiarism/credibility accusations from a
+rival founder. If Groundswarm's docs ever compare against swarms by name, that needs careful,
+factual handling, it's a live dispute, not a settled fact.</li>
+<li>The verification/observability market (Galileo, Patronus, Arize, LangSmith and peers) is
+well-funded and could pivot toward swarm-level verification once demand is proven. Being first
+doesn't guarantee staying ahead of teams with existing enterprise sales channels.</li>
+</ul>
+</div>
+
+</div>
+
+<div class="src">Synthesized directly from <a href="../research/literature-survey.html">literature survey</a> and <a href="../research/market-survey.html">market survey</a> findings; no new research performed for this page. See <a href="../caveats/limitations.html">limitations</a> for what this SWOT does not establish.</div>
+
+</div>
+</body>
+</html>

@@ -1,0 +1,45 @@
+Vendor A Object Storage — Incident Postmortem
+
+Incident ID: VA-2026-0302-1
+Date: 2026-03-02
+Start time: 14:12 UTC
+Region: us-east-2
+Duration: 47 minutes
+Severity: SEV-2
+
+Summary
+-------
+Starting at 14:12 UTC on 2026-03-02, a subset of object storage requests in
+the us-east-2 region began returning 403 Forbidden errors. The issue
+affected approximately 8% of read requests and 3% of write requests in the
+region. The incident was resolved at 14:59 UTC, a total duration of 47
+minutes.
+
+Root Cause
+----------
+An internal deployment pushed an updated access-control policy to the
+regional authorization service. The policy contained a misconfigured
+condition block that incorrectly evaluated a subset of bucket-level grants
+as denied. The misconfiguration was introduced by a routine policy-sync job
+and was not caught by pre-deployment validation because the validation
+suite did not cover this specific condition-block interaction.
+
+Impact
+------
+No data was lost or corrupted during the incident. Affected requests
+received 403 Forbidden responses; no requests were silently dropped or
+misrouted. Customers relying on default retry behavior in official SDKs
+experienced elevated latency but no failed operations after retry.
+
+Remediation
+-----------
+The misconfigured policy was identified at 14:51 UTC and a rollback to the
+previous known-good policy was initiated at 14:53 UTC. The rollback
+completed and traffic returned to normal at 14:59 UTC.
+
+Commitments
+-----------
+Vendor A is extending the pre-deployment validation suite to cover
+condition-block interactions of this type, and is adding a canary stage
+to the policy-sync job that will limit any future misconfiguration to a
+single availability zone before full-region rollout.

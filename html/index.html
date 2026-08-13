@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Groundswarm — Project Hub</title>
+<style>
+  :root{--bg:#0f1115;--fg:#e6e9ef;--dim:#98a2b3;--card:#171a21;--line:#252a34;
+        --good:#3fb950;--bad:#f85149;--warn:#d29922;--acc:#58a6ff}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--fg);
+       font:15px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+  .wrap{max-width:1080px;margin:0 auto;padding:28px 20px 80px}
+  h1{font-size:26px;margin:0 0 4px} h2{font-size:19px;margin:32px 0 10px}
+  .dim{color:var(--dim)} .small{font-size:13px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:10px;
+        padding:16px 18px;margin:14px 0}
+  table{border-collapse:collapse;width:100%;font-size:13.5px;margin:10px 0}
+  .scroll{overflow-x:auto}
+  th,td{border-bottom:1px solid var(--line);padding:9px 10px;text-align:left}
+  th{color:var(--dim);font-weight:600;font-size:12.5px;text-transform:uppercase;letter-spacing:.03em}
+  .good{color:var(--good)} .bad{color:var(--bad)} .warn{color:var(--warn)}
+  .tag{display:inline-block;padding:2px 8px;border-radius:99px;font-size:11.5px;font-weight:700}
+  .t-act{background:#123018;color:var(--good)} .t-pend{background:#33280a;color:var(--warn)}
+  code{background:#0b0d11;padding:1px 5px;border-radius:4px;font-size:13px}
+  a{color:var(--acc)}
+  .lead{font-size:16px;border-left:3px solid var(--acc);padding-left:14px;margin:16px 0}
+  a.rowlink{color:var(--fg);text-decoration:none}
+  a.rowlink:hover{color:var(--acc)}
+  tr.clickable{cursor:pointer}
+  tr.clickable:hover{background:#1b1f28}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<h1>Groundswarm — Project Hub</h1>
+<div class="dim">Open source &middot; early / architecture &amp; research phase &middot; last updated 2026-08-13</div>
+
+<div class="lead">
+A swarm of OpenClaw-based agents, coordinated by a new orchestrator, whose combined output is
+independently re-checked against live primary sources before anything is reported as fact. Not
+SwarmBench, not a fork of any proprietary task-package format, built on OpenClaw (MIT) as the
+worker runtime plus a new orchestrator and verifier of Groundswarm's own. See
+<a href="../README.md">README</a> for the full pitch and <a href="../LICENSE">LICENSE</a> for terms.
+</div>
+
+<h2>Status</h2>
+<div class="card">
+<b class="warn">&#9888; Early</b> &mdash; architecture and licensing decisions made, orchestrator,
+verifier and memory not yet implemented beyond the single-domain capstone prototype the
+verification pattern was proven on. Literature survey, market survey, SWOT, similar-projects,
+name-availability, and memory-landscape research completed 2026-08-13; see
+<a href="./audit/research-log.html">audit log</a> for the full run record. Published as Pankh-AI
+company work, <code>Copyright 2026 Pankh-AI</code>, under an existing Pankh-AI GitHub org. One
+decision remains open: confirmation of the first proof-case domain. A fourth component, Memory, a
+scoped and verified shared knowledge store, has been added to the architecture (ADR-007), checked
+against 9 agent-memory products and 2 research proposals, and confirmed as a genuine, unaddressed
+gap, not yet built. See <a href="./decisions/adr-index.html">decisions</a>.
+</div>
+
+<h2>Artifacts</h2>
+<div class="scroll"><table id="reg"><thead>
+<tr><th>Area</th><th>Type</th><th>Title</th><th>Status</th></tr>
+</thead><tbody></tbody></table></div>
+
+<script>
+const artifacts = [
+  {area:"Research", type:"Survey",     title:"Literature Survey — grounding, LLM-as-judge failure modes, multi-agent error compounding, and the confirmed benchmark gap for verified-vs-plausible swarm output", path:"./research/literature-survey.html", status:"Active"},
+  {area:"Research", type:"Survey",     title:"Market Survey — 7 orchestration frameworks + 12 verification/eval companies; none independently re-fetch live sources to verify a swarm's combined output", path:"./research/market-survey.html", status:"Active"},
+  {area:"Research", type:"Survey",     title:"Similar Projects & Name Check — swarm-scale and verification research don't overlap yet; \"Groundswarm\" comes back clear on GitHub/npm/PyPI/DNS", path:"./research/similar-projects.html", status:"Active"},
+  {area:"Research", type:"Survey",     title:"Memory Landscape — 9 agent-memory products + 2 papers checked; none combine validity scoping, a deterministic gate, tiered loading, and TTL/supersedes. Mem0 and Zep both lean on an LLM for conflict resolution and score 18% / 7% on a fact-conflict benchmark", path:"./research/memory-landscape.html", status:"Active"},
+  {area:"Strategy", type:"Analysis",   title:"SWOT — sourced positioning synthesis from the literature, market, and memory-landscape surveys, nothing generic", path:"./strategy/swot.html", status:"Active"},
+  {area:"Decisions", type:"ADR Log",   title:"Decisions — OpenClaw as worker runtime, the Groundswarm name, Apache-2.0 open-core licensing, Python for the orchestrator/verifier, Memory as a fourth component (confirmed gap), Pankh-AI as copyright holder and publishing org, and one still-open item", path:"./decisions/adr-index.html", status:"Active"},
+  {area:"Caveats",   type:"Limitations", title:"Limitations — no benchmark yet validates the core bet, fail-closed judging is confirmed hard not solved, trademark clearance is informal, Memory is a confirmed gap not proven code, GitHub cross-check deliberately deferred", path:"./caveats/limitations.html", status:"Active"},
+  {area:"Audit",     type:"Log",       title:"Research Audit Log — every agent run: model, tool calls, duration, tokens, and what was deliberately not researched and why", path:"./audit/research-log.html", status:"Active"},
+];
+
+const tbody = document.querySelector('#reg tbody');
+for (const a of artifacts) {
+  const tr = document.createElement('tr');
+  tr.className = 'clickable';
+  tr.onclick = () => { window.location.href = a.path; };
+  const statusTag = a.status === 'Active'
+    ? '<span class="tag t-act">Active</span>'
+    : `<span class="tag t-pend">${a.status}</span>`;
+  tr.innerHTML = `<td>${a.area}</td><td>${a.type}</td><td><a class="rowlink" href="${a.path}">${a.title}</a></td><td>${statusTag}</td>`;
+  tbody.appendChild(tr);
+}
+</script>
+
+</div>
+</body>
+</html>

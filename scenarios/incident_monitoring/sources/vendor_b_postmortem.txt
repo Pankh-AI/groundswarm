@@ -1,0 +1,46 @@
+Vendor B Managed Database — Incident Postmortem
+
+Incident ID: VB-2026-0418-3
+Date: 2026-04-18
+Start time: 09:03 UTC
+Region: eu-west-1
+Duration: primary failover took 6 minutes 40 seconds against a 30 second
+target
+Severity: SEV-2
+
+Summary
+-------
+At 09:03 UTC on 2026-04-18, the primary node of a managed database cluster
+in eu-west-1 became unresponsive due to underlying host hardware
+degradation. Automatic failover to the standby replica was triggered, but
+completed in 6 minutes 40 seconds rather than the expected 30 seconds.
+During the extended failover window, approximately 4% of write requests to
+the cluster timed out.
+
+Root Cause
+----------
+The failover mechanism relies on a DNS record update to redirect client
+connections from the old primary endpoint to the newly promoted replica.
+Investigation found that a caching layer in front of the DNS resolvers was
+serving a stale record with a longer-than-configured effective TTL,
+causing a large share of clients to keep resolving to the unresponsive
+old primary well after the promotion completed.
+
+Impact
+------
+Approximately 4% of write requests issued to the cluster during the 6
+minute 40 second window timed out and returned an error to the calling
+application. Read replicas were not affected. No data loss occurred; the
+newly promoted primary retained all committed writes.
+
+Remediation
+-----------
+Engineers manually flushed the affected DNS caching layer at 09:08 UTC,
+which restored correct resolution and ended the elevated timeout rate.
+
+Commitments
+-----------
+Vendor B is correcting the effective TTL enforcement in the caching layer
+so that configured DNS TTL values are honored, and is adding a
+non-DNS-dependent connection-redirect mechanism as a second failover path
+for future incidents of this kind.

@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Groundswarm — Research Audit Log</title>
+<style>
+  :root{--bg:#0f1115;--fg:#e6e9ef;--dim:#98a2b3;--card:#171a21;--line:#252a34;
+        --good:#3fb950;--bad:#f85149;--warn:#d29922;--acc:#58a6ff}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--fg);
+       font:15px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+  .wrap{max-width:980px;margin:0 auto;padding:28px 20px 80px}
+  h1{font-size:24px;margin:0 0 4px} h2{font-size:17px;margin:30px 0 8px;color:var(--acc)}
+  .dim{color:var(--dim)} .small{font-size:13px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:16px 18px;margin:14px 0}
+  table{border-collapse:collapse;width:100%;font-size:13.5px;margin:10px 0}
+  .scroll{overflow-x:auto}
+  th,td{border-bottom:1px solid var(--line);padding:8px 9px;text-align:left;vertical-align:top}
+  th{color:var(--dim);font-weight:600;font-size:12px;text-transform:uppercase;letter-spacing:.03em}
+  code{background:#0b0d11;padding:1px 5px;border-radius:4px;font-size:13px}
+  a{color:var(--acc)}
+  .back{font-size:13px;margin-bottom:18px;display:inline-block}
+  .lead{font-size:15.5px;border-left:3px solid var(--acc);padding-left:14px;margin:16px 0}
+  .tag{display:inline-block;padding:2px 8px;border-radius:99px;font-size:11.5px;font-weight:700}
+  .t-done{background:#123018;color:var(--good)}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<a class="back" href="../index.html">&larr; Groundswarm hub</a>
+<h1>Research Audit Log</h1>
+<div class="dim">Run record for the 2026-08-13 literature/market/similar-projects/memory research round</div>
+
+<div class="lead">
+Five background research agents across two dispatch rounds, each self-contained (no shared memory
+of this conversation, no access to this repository beyond what was stated in its own prompt). The
+second round (memory landscape) was dispatched after the first four returned, triggered by a
+proposal to add a fourth architecture component, not planned from the start. Model tier and
+dispatch method follow the standing token/session-hygiene rule: research and lookup subagents run
+on <code>sonnet</code>, not the frontier tier, reserving that for supervising and judgment-heavy
+work.
+</div>
+
+<h2>Runs</h2>
+<div class="scroll"><table><thead>
+<tr><th>Thread</th><th>Model</th><th>Tool calls</th><th>Duration</th><th>Tokens</th><th>Output</th></tr>
+</thead><tbody>
+<tr><td>Literature survey</td><td>sonnet</td><td>16</td><td>~169s</td><td>67,628</td><td><a href="../research/literature-survey.html">literature-survey.html</a></td></tr>
+<tr><td>Market survey (parent, delegated to two children)</td><td>sonnet</td><td>3</td><td>~55s</td><td>51,475</td><td>synthesized into <a href="../research/market-survey.html">market-survey.html</a> and <a href="../strategy/swot.html">swot.html</a> directly from the two children below</td></tr>
+<tr><td>&nbsp;&nbsp;&#8618; Orchestration frameworks (child)</td><td>sonnet</td><td>21</td><td>~138s</td><td>69,340</td><td><a href="../research/market-survey.html">market-survey.html</a></td></tr>
+<tr><td>&nbsp;&nbsp;&#8618; Verification/eval companies (child)</td><td>sonnet</td><td>19</td><td>~147s</td><td>68,827</td><td><a href="../research/market-survey.html">market-survey.html</a></td></tr>
+<tr><td>Similar projects &amp; name availability</td><td>sonnet</td><td>29</td><td>~249s</td><td>80,390</td><td><a href="../research/similar-projects.html">similar-projects.html</a></td></tr>
+<tr><td>Memory landscape (round 2, dispatched after Memory was proposed)</td><td>sonnet</td><td>25</td><td>~222s</td><td>77,249</td><td><a href="../research/memory-landscape.html">memory-landscape.html</a></td></tr>
+</tbody></table></div>
+
+<div class="card">
+<b>Total:</b> 6 agent runs across 2 rounds (1 parent + 2 children + 3 independent), 113 tool
+calls, ~414,909 tokens. All dispatched via the Agent tool, <code>run_in_background: true</code>,
+round 1 launched in a
+single parallel batch of 3 top-level threads; the market-survey thread further split itself into
+2 concurrent children rather than researching both halves serially. Round 2 (memory landscape) was
+a single agent, dispatched solo after Memory was proposed as a fourth component mid-conversation.
+</div>
+
+<h2>What each thread was asked</h2>
+<div class="card">
+<b>Literature survey:</b> hallucination detection/retrieval-grounding, LLM-as-judge failure modes,
+multi-agent error compounding, and whether any benchmark scores verified-vs-plausible multi-agent
+output. Full brief and results on the <a href="../research/literature-survey.html">literature
+survey page</a>.<br><br>
+<b>Market survey:</b> 7 multi-agent orchestration frameworks and 12 LLM verification/eval/observability
+companies, license/business model and verification depth for each, synthesized into a SWOT. Full
+brief and results on the <a href="../research/market-survey.html">market survey page</a> and
+<a href="../strategy/swot.html">SWOT page</a>.<br><br>
+<b>Similar projects &amp; name check:</b> existing open-source projects combining swarm scale with
+independent verification, plus a "Groundswarm" collision check across GitHub, npm, PyPI, web
+search, and DNS. Full brief and results on the <a href="../research/similar-projects.html">similar-projects
+page</a>.<br><br>
+<b>Memory landscape (round 2):</b> whether any agent-memory product or research proposal combines
+five specific design properties, validity/blast-radius scoping, a deterministic pre-merge gate,
+review-gated high-stakes writes, tiered token-aware loading, and TTL/supersedes staleness, checked
+against 9 products and 2 papers. Full brief and results on the
+<a href="../research/memory-landscape.html">memory landscape page</a>.
+</div>
+
+<h2>Scope note: what was deliberately not researched</h2>
+<div class="card">
+The originating request also asked to cross-check the project owner's own GitHub activity for
+context ("use pankaj github if possible"). This was not delegated to any research agent. A local
+check (<code>git remote -v</code>, <code>git config</code>) found no GitHub remote configured on
+this repository, only a local git identity that does not match the name this project is meant to
+be published under, and the user separately instructed "no sensitive info" immediately after that
+check surfaced a personal email address in tool output. Rather than search the web for a common
+name and risk either exposing that data or misattributing a different person's public repositories
+to this project, that thread was dropped and left for the user to supply a confirmed public handle
+directly. No personal identifying information (name, email, or otherwise) was passed to any
+research agent or written into any file in this research round. See
+<a href="../caveats/limitations.html">limitations</a> for the full list of open gaps.
+</div>
+
+<h2>Method</h2>
+<div class="card">
+Each agent was dispatched with a self-contained prompt (full project context restated, since
+agents share no memory with this conversation or each other), instructed to use web search
+aggressively, prioritize primary sources (arXiv papers, official docs, pricing pages) over
+secondary blog coverage, and explicitly told not to fabricate findings, if search results were
+thin, to say so rather than guess. Every claim reproduced in the <code>html/</code> pages carries
+its source link back to where the agent found it; nothing in this research round was asserted
+without a citation traceable to the original agent output.
+</div>
+
+</div>
+</body>
+</html>

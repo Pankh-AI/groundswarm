@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Groundswarm — Literature Survey</title>
+<style>
+  :root{--bg:#0f1115;--fg:#e6e9ef;--dim:#98a2b3;--card:#171a21;--line:#252a34;
+        --good:#3fb950;--bad:#f85149;--warn:#d29922;--acc:#58a6ff}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--fg);
+       font:15px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+  .wrap{max-width:920px;margin:0 auto;padding:28px 20px 80px}
+  h1{font-size:24px;margin:0 0 4px} h2{font-size:18px;margin:30px 0 8px;color:var(--acc)}
+  h3{font-size:15px;margin:20px 0 6px}
+  .dim{color:var(--dim)} .small{font-size:13px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:10px;
+        padding:16px 18px;margin:14px 0}
+  .tag{display:inline-block;padding:2px 8px;border-radius:99px;font-size:11.5px;font-weight:700}
+  .t-gap{background:#33280a;color:var(--warn)} .t-est{background:#123018;color:var(--good)}
+  code{background:#0b0d11;padding:1px 5px;border-radius:4px;font-size:13px}
+  a{color:var(--acc)}
+  .lead{font-size:15.5px;border-left:3px solid var(--acc);padding-left:14px;margin:16px 0}
+  .src{font-size:13px;color:var(--dim)}
+  .back{font-size:13px;margin-bottom:18px;display:inline-block}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<a class="back" href="../index.html">&larr; Groundswarm hub</a>
+<h1>Literature Survey</h1>
+<div class="dim">Grounding, verification and multi-agent hallucination research &middot; compiled 2026-08-13 &middot; background research agent, model sonnet</div>
+
+<div class="lead">
+Four questions, asked to find out whether Groundswarm's core bet (a fail-closed verifier that
+independently re-checks a swarm's combined output against live primary sources) is validated,
+contested, or simply unbuilt in the existing literature. Short answer: the individual pieces
+are well studied, but nobody has put them together at the swarm level, and the literature itself
+flags "fail closed" as a genuinely unsolved problem, not a solved recipe to import.
+</div>
+
+<h2>1. Hallucination detection, retrieval-grounding, citation verification</h2>
+<span class="tag t-est">Established, actively evolving</span>
+<div class="card">
+RAG-as-grounding is mature; the frontier has moved to <i>checking</i> what RAG produced.
+Consistency-based black-box detection is anchored by
+<a href="https://arxiv.org/abs/2303.08896">SelfCheckGPT</a> and semantic entropy
+(<a href="https://www.nature.com/articles/s41586-024-07421-0">Nature, 2024</a>). Atomic-fact
+scoring comes from <a href="https://arxiv.org/abs/2305.14251">FActScore</a>, tool-augmented
+re-verification from <a href="https://arxiv.org/abs/2307.13528">FacTool</a>. For citations
+specifically, <a href="https://arxiv.org/abs/2305.14627">ALCE</a> (EMNLP 2023) is the standard
+benchmark, and <a href="https://arxiv.org/abs/2210.08726">RARR</a> retrofits citations and
+revises unsupported claims after the fact.
+<p>Cheap, high-fidelity grounding checks are now practical:
+<a href="https://arxiv.org/abs/2404.10774">MiniCheck</a> matches GPT-4-level fact-checking at
+roughly 400x lower cost, a plausible building block for a Groundswarm verifier rather than
+something that has to be invented from scratch.</p>
+<p>Most directly relevant to Groundswarm's framing:
+<a href="https://arxiv.org/html/2605.06635v1">Cited but Not Verified: Source Attribution in LLM
+Deep Research Agents</a> and
+<a href="https://arxiv.org/pdf/2604.03173">Detecting and Correcting Reference Hallucinations in
+Commercial LLMs and Deep Research Agents</a> both find commercial "deep research" agents
+routinely emit citations that don't actually support the claim, even single-vendor systems that
+already advertise grounding. Caution flag:
+<a href="https://aclanthology.org/2025.emnlp-main/">The Illusion of Progress: Re-evaluating
+Hallucination Detection</a> (EMNLP 2025) argues current hallucination-detection evals themselves
+overstate how much progress has been made, worth remembering before trusting any single metric.</p>
+</div>
+
+<h2>2. LLM-as-judge: strengths, failure modes, fail-closed design</h2>
+<span class="tag t-est">Well documented</span> <span class="tag t-gap">fail-closed still immature</span>
+<div class="card">
+<a href="https://arxiv.org/abs/2306.05685">Zheng et al., Judging LLM-as-a-Judge with MT-Bench and
+Chatbot Arena</a> (NeurIPS 2023) is foundational: strong judges reach roughly 80% human agreement,
+but the paper itself names position, verbosity and self-enhancement bias as open problems.
+Self-preference is now causally demonstrated, not just observed:
+<a href="https://proceedings.neurips.cc/paper_files/paper/2024/hash/7f1f0218e45f5414c79c0679633e47bc-Abstract-Conference.html">LLM
+Evaluators Recognize and Favor Their Own Generations</a> (NeurIPS 2024) shows self-recognition
+capability correlates linearly with self-preference strength, meaning the judge model matters
+mechanically, not just as a config choice.
+<p>Rubric-gaming is an active 2025&ndash;2026 subfield:
+<a href="https://arxiv.org/pdf/2604.01375">RIFT</a> taxonomizes rubric failure modes,
+<a href="https://arxiv.org/html/2601.08654v1">Rulers</a> proposes locked, evidence-anchored
+rubrics against instability, <a href="https://arxiv.org/html/2603.00077v2">Autorubric</a>
+separates criteria into independent calls specifically to kill halo effects. This is the same
+shape of problem the capstone's 41-check rubric was built to resist.</p>
+<p>Most load-bearing for the "fails closed" goal:
+<a href="https://arxiv.org/abs/2506.09038">AbstentionBench</a> finds abstention is <b>unsolved</b>
+and does not improve with model scale, reasoning models still guess when they should decline,
+and <a href="https://arxiv.org/abs/2608.07517">The Judge Knows When It Knows</a> argues a few
+high-precision calls plus honest abstention beats confident wrong answers everywhere. That is
+Groundswarm's exact design bet, and the literature confirms it is a real engineering problem to
+solve, not a checkbox to enable.</p>
+</div>
+
+<h2>3. Multi-agent error compounding and verifying swarm output</h2>
+<span class="tag t-gap">This is where Groundswarm's novelty actually sits</span>
+<div class="card">
+<a href="https://arxiv.org/abs/2503.13657">Cemri et al., Why Do Multi-Agent LLM Systems Fail?</a>
+(MAST) analyzed 1,600+ traces across 7 frameworks and found 14 failure modes across 3 categories,
+system design, inter-agent misalignment, and <b>task verification</b>, with high inter-rater
+agreement (&kappa;=0.88). A meaningful share of real multi-agent failures are missing or
+incomplete verification, not raw single-model hallucination, which is measured evidence the
+problem Groundswarm targets is real in production systems today.
+<p>Most directly relevant:
+<a href="https://arxiv.org/html/2606.07937v1">Hallucination Cascade: Error Propagation in
+Multi-Agent LLM Systems</a> (Polytechnique Montr&eacute;al) tracks atomic claims through agent
+chains and finds a counterintuitive result: the normalized hallucination score <i>drops</i>
+across a 3-agent chain (0.422&rarr;0.272, later agents smooth earlier errors' surface texture)
+while ground-truth factual accuracy actually <i>declines</i> (0.789&rarr;0.769), and 7.3% of hops
+actively amplify errors. Swarms can look more coherent while becoming less true, which is
+precisely the failure mode a verifier needs to catch rather than a hypothetical risk.</p>
+<p><a href="https://arxiv.org/html/2604.23366">GSAR</a> ("typed grounding") is the closest
+architectural analog found, checkpointing peer-agent outputs before downstream integration,
+worth reading as convergent prior art rather than a competing product. Existing multi-agent
+fact-checkers (FC-MAD, <a href="https://arxiv.org/html/2601.22361v2">MERMAID</a>) verify one
+claim via internal debate, not the combined output of an upstream production swarm, which is the
+gap Groundswarm's verifier is aimed at.</p>
+</div>
+
+<h2>4. Benchmarks for verified-vs-plausible multi-agent output</h2>
+<span class="tag t-gap">Clearest open gap found</span>
+<div class="card">
+No benchmark specifically scores "genuinely grounded vs. merely plausible" for multi-agent
+systems. Adjacent pieces exist, <a href="https://arxiv.org/abs/2311.12983">GAIA</a> (live-web,
+exact-match ground truth), <a href="https://arxiv.org/abs/2310.03903">LLM-Coordination</a>
+(coordination ability, not factuality), the MAST failure taxonomy (categorizes failures, doesn't
+score them), but nothing composes them into a single eval.
+<p>This is genuinely unbuilt: an evaluation asking whether combining N agents increases or
+decreases groundedness versus a single agent, checkable by an independent re-fetcher. That gap
+is exactly what would need to be built to validate Groundswarm's bet as research, separately from
+validating it as a product.</p>
+</div>
+
+<h2>What this means for Groundswarm</h2>
+<div class="card">
+Check 1: the individual techniques the verifier needs (grounding checks, citation round-tripping,
+LLM-as-judge) are mature enough to build on, several with cheap off-the-shelf implementations
+like MiniCheck.<br>
+Check 2: "fail closed" is confirmed hard, not solved, by AbstentionBench, so the deterministic
+re-fetch layer the capstone already proved matters more than the LLM judge, the judge is a
+secondary check, not the primary guarantee.<br>
+Check 3: swarm-level verification of combined, multi-agent output is a real, named, and
+apparently unaddressed gap in both the academic literature and (per the market survey) the
+commercial tooling landscape, which is the strongest evidence found that this is worth building.
+</div>
+
+<div class="src">Source: background research agent (model sonnet), 16 tool calls, ~169s, 67.6k tokens. Full source list embedded in links above; see <a href="../audit/research-log.html">audit log</a> for the run record.</div>
+
+</div>
+</body>
+</html>
