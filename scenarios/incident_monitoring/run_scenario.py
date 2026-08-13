@@ -33,6 +33,16 @@ FABRICATED_CLAIM_QUOTE = (
     "permanent data loss occurred across all affected buckets in us-east-2"
 )
 
+# A second fabrication with no quote, so it can only be caught by the LLM
+# judge fallback, not the deterministic check. The deterministic path
+# already gets exercised by FABRICATED_CLAIM_TEXT above; this one exists
+# specifically to prove the judge path also fails closed on a real model,
+# not just in the mocked unit tests.
+FABRICATED_CLAIM_2_TEXT = (
+    "Vendor B's automatic failover completed in under 10 seconds, faster "
+    "than its 30 second target."
+)
+
 
 def main() -> int:
     client = OllamaClient()
@@ -75,31 +85,47 @@ def main() -> int:
         source_path=str(SOURCES_DIR / "vendor_a_postmortem.txt"),
         worker_id="injected_by_script",
     )
+    fabricated_2 = Claim(
+        text=FABRICATED_CLAIM_2_TEXT,
+        quote=None,
+        source_path=str(SOURCES_DIR / "vendor_b_postmortem.txt"),
+        worker_id="injected_by_script",
+    )
     all_claims.append(fabricated)
+    all_claims.append(fabricated_2)
+    # Claim is a plain (unfrozen) dataclass and so is unhashable; track the
+    # two injected claims by identity via id() instead of putting them in a
+    # set directly.
+    fabrication_ids = {id(fabricated), id(fabricated_2)}
 
-    print("Verifying all claims (including one deliberately fabricated claim "
-          "injected by this script, not produced by any model)...")
+    print("Verifying all claims (including two deliberately fabricated claims "
+          "injected by this script, not produced by any model: one with a "
+          "fake quote to test the deterministic check, one with no quote to "
+          "test the LLM-judge fallback)...")
     verifier = Verifier(judge_client=client)
     verifications = verifier.verify_all(all_claims)
 
     for v in verifications:
-        flag = " <-- INJECTED FABRICATION" if v.claim is fabricated else ""
+        flag = " <-- INJECTED FABRICATION" if id(v.claim) in fabrication_ids else ""
         print(f"  [{v.verdict:10s}] ({v.method:12s}) {v.claim.text!r}{flag}")
         print(f"               reason: {v.reason}")
 
-    fabricated_result = next(v for v in verifications if v.claim is fabricated)
-    fabrication_caught = fabricated_result.verdict != "confirmed"
+    fabrication_results = [v for v in verifications if id(v.claim) in fabrication_ids]
+    all_fabrications_caught = all(v.verdict != "confirmed" for v in fabrication_results)
 
     print()
-    if fabrication_caught:
-        print(f"PASS: fabricated claim was NOT confirmed "
-              f"(verdict={fabricated_result.verdict!r}, method={fabricated_result.method!r})")
+    for v in fabrication_results:
+        status = "caught" if v.verdict != "confirmed" else "MISSED"
+        print(f"  {status}: (verdict={v.verdict!r}, method={v.method!r}) {v.claim.text!r}")
+
+    if all_fabrications_caught:
+        print("\nPASS: both fabricated claims were NOT confirmed")
     else:
-        print("FAIL: fabricated claim was CONFIRMED. The verifier failed to catch it.")
+        print("\nFAIL: at least one fabricated claim was CONFIRMED. The verifier failed to catch it.")
 
     memory_db = SCENARIO_DIR / "memory.sqlite3"
     store = MemoryStore(db_path=str(memory_db))
-    confirmed = [v for v in verifications if v.verdict == "confirmed" and v.claim is not fabricated]
+    confirmed = [v for v in verifications if v.verdict == "confirmed" and id(v.claim) not in fabrication_ids]
     for v in confirmed:
         entry = MemoryEntry(
             content=v.claim.text,
@@ -111,7 +137,7 @@ def main() -> int:
         store.write(entry)
     print(f"\nWrote {len(confirmed)} confirmed claim(s) to Memory ({memory_db}).")
 
-    return 0 if fabrication_caught else 1
+    return 0 if all_fabrications_caught else 1
 
 
 if __name__ == "__main__":
