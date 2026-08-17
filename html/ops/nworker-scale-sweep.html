@@ -1,0 +1,221 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Groundswarm &mdash; N-worker scale &amp; crash-safety sweep</title>
+<style>
+  :root{--bg:#0f1115;--fg:#e6e9ef;--dim:#98a2b3;--card:#171a21;--line:#252a34;
+        --good:#3fb950;--bad:#f85149;--warn:#d29922;--acc:#58a6ff}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--fg);
+       font:15px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+  .wrap{max-width:1080px;margin:0 auto;padding:28px 20px 80px}
+  h1{font-size:24px;margin:0 0 4px} h2{font-size:17px;margin:30px 0 8px;color:var(--acc)}
+  .dim{color:var(--dim)} .small{font-size:13px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:16px 18px;margin:14px 0}
+  table{border-collapse:collapse;width:100%;font-size:13.5px;margin:10px 0}
+  .scroll{overflow-x:auto}
+  th,td{border-bottom:1px solid var(--line);padding:8px 9px;text-align:left;vertical-align:top}
+  th{color:var(--dim);font-weight:600;font-size:12px;text-transform:uppercase;letter-spacing:.03em}
+  code{background:#0b0d11;padding:1px 5px;border-radius:4px;font-size:13px}
+  a{color:var(--acc)}
+  .back{font-size:13px;margin-bottom:18px;display:inline-block}
+  .lead{font-size:15.5px;border-left:3px solid var(--acc);padding-left:14px;margin:16px 0}
+  .tag{display:inline-block;padding:2px 8px;border-radius:99px;font-size:11.5px;font-weight:700}
+  .t-done{background:#123018;color:var(--good)} .t-fail{background:#3a1418;color:var(--bad)}
+  .t-warn{background:#33280a;color:var(--warn)}
+  .num{text-align:right;font-variant-numeric:tabular-nums}
+  .stat{display:inline-block;min-width:170px;margin:6px 22px 6px 0}
+  .stat b{display:block;font-size:20px} .stat span{color:var(--dim);font-size:12px}
+  .quote{font-family:ui-monospace,Consolas,monospace;font-size:12.5px;background:#0b0d11;
+         padding:6px 8px;border-radius:6px;display:block;margin-top:4px;color:#c9d1d9;white-space:pre-wrap}
+  .good{color:var(--good)} .bad{color:var(--bad)} .warn{color:var(--warn)}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<a class="back" href="../index.html">&larr; Groundswarm hub</a>
+<h1>N-worker scale &amp; crash-safety sweep</h1>
+<div class="dim">Question A from the Move-1 re-validation follow-up: does the swarm crash, corrupt
+state, or violate fail-closed behavior as N scales &mdash; independent of rejection-rate
+composition, which is Question B, answered separately by the <a href="prompt-ab-move2.html">prompt
+A/B</a>. Run via <code>run_scenario_sweep.py</code> at N=1, 5, 20, 100 against a Colab-hosted GPU
+Ollama instance (see <a href="prompt-ab-move2.html#infra">infra note</a>), and at N=200 against a
+separate live remote dolphin3 instance (ngrok-tunneled, not Colab-notebook-embedded &mdash; see
+<a href="move2-results.html">Move 2</a>'s infra note).</div>
+
+<div class="lead">
+All five scale points now run <b class="good">clean, zero crashes</b> &mdash; but two of the five
+first attempts <b class="bad">did crash</b>, each on a genuine bug this sweep exists to catch. N=20:
+a mid-run network read-timeout on one worker's call raised an uncaught exception that propagated out
+of the orchestrator and killed the <i>entire</i> 20-worker batch, discarding every other worker's
+completed work. N=200: a worker echoed part of the extraction prompt's own schema-description text
+as a dict key and wrapped a real quote inside it, landing a JSON object where the verifier expected a
+plain string; <code>_normalize()</code> crashed calling <code>.replace()</code> on it directly. Each
+was fixed the same way &mdash; live, on real traffic, regression-tested before moving on, never
+patched around instead of understood &mdash; and neither has recurred on any re-run since. At N=100
+and N=200, the verifier's fail-closed logic held under a much richer mix of malformed and
+inconsistent claims than any smaller run had produced, without a single false <code>confirmed</code>.
+</div>
+
+<h2>Results</h2>
+<div class="scroll"><table><thead>
+<tr><th>N</th><th class="num">Real claims</th><th class="num">Confirmed</th><th class="num">Rejected</th><th class="num">Unverified</th><th>Fabrications</th><th class="num">Calls</th><th class="num">Tokens</th><th class="num">Wall time</th></tr>
+</thead><tbody>
+<tr><td>1</td><td class="num">4</td><td class="num">4</td><td class="num">0</td><td class="num">0</td><td>5/5 caught</td><td class="num">4</td><td class="num">1,572</td><td class="num">14.0s</td></tr>
+<tr><td>5</td><td class="num">15</td><td class="num">12</td><td class="num">1</td><td class="num">2</td><td>5/5 caught<sup>*</sup></td><td class="num">8</td><td class="num">3,942</td><td class="num">277.0s</td></tr>
+<tr><td>20</td><td class="num">77</td><td class="num">55</td><td class="num">18</td><td class="num">4</td><td>5/5 caught</td><td class="num">28</td><td class="num">19,090</td><td class="num">228.4s</td></tr>
+<tr><td>100</td><td class="num">375</td><td class="num">293</td><td class="num">73</td><td class="num">9</td><td>5/5 caught</td><td class="num">113</td><td class="num">77,226</td><td class="num">1024.4s</td></tr>
+<tr><td>200</td><td class="num">746</td><td class="num">564</td><td class="num">167</td><td class="num">15</td><td>5/5 caught</td><td class="num">220</td><td class="num">151,991</td><td class="num">2405.0s</td></tr>
+</tbody></table></div>
+<div class="small dim"><sup>*</sup> 2 of the 5 N=5 fabrication catches were judge-timeout fail-closed,
+not a genuine judge rejection &mdash; see finding 4 below. N=20, N=100, and N=200 figures are from
+the post-fix re-runs; the crashed first attempts wrote no verification output at all (see findings 2
+and 6). None of these five runs used <code>temperature=0</code> (unlike the paired
+<a href="prompt-ab-move2.html">A/B</a>), so confirm/reject/unverified counts are not expected to move
+monotonically with N &mdash; see caveats.</div>
+
+<h2>1. Zero crashes across all four scale points, after fixing one real crash</h2>
+<div class="card">
+N=1 and N=5 never crashed. N=20's <i>first</i> attempt did (see finding 2); after the fix, N=20 and
+N=100 both ran to completion cleanly, each producing a well-formed verification log, Memory writes,
+and an observability report. This is the same class of check <a href="move1-revalidation.html">Move
+1</a> already exercised once against a real 55-worker run (a genuine <code>KeyError</code> found and
+fixed there); this sweep found a second, different crash class at higher worker count and fixed it
+the same way &mdash; live, on real traffic, regression-tested before moving on &mdash; rather than
+treating a blocked run as an acceptable stopping point.
+</div>
+
+<h2>2. The crash that broke N=20's first attempt, and two independent fixes</h2>
+<div class="card">
+The first N=20 attempt failed with an uncaught exception, not a graceful rejection:
+<div class="quote">groundswarm.llm.ollama_client.OllamaUnavailable: could not reach Ollama at
+https://ability-cartoons-sacred-relative.trycloudflare.com: The read operation timed out</div>
+raised from inside <code>OllamaClient.generate()</code> during one worker's extraction call, and
+never caught anywhere above it &mdash; it propagated straight out of <code>Orchestrator.run()</code>'s
+worker loop and killed the whole batch. Unlike a null quote or an unparseable computation, which the
+Verifier already turns into a graceful <code>unverified</code>, a transport-level failure on the
+extraction call itself had no such handling. At N=1 or N=5 the odds of any single call hitting a
+transient network hiccup are low; at N=20, four times the sequential Ollama calls means four times
+the exposure window, and one did.
+<p><b>Fix 1 (code, this repo):</b> <code>OllamaSimWorker.run()</code> now catches
+<code>OllamaUnavailable</code> around its extraction call and degrades that one worker to zero
+claims, the same treatment already given to an unparseable response, instead of letting the
+exception escape. <code>Orchestrator.run()</code> got the matching guard around the synthesis call,
+so a failed briefing no longer discards the extraction workers' already-verified claims. Two
+regression tests added (<code>test_sim_worker.py</code>, plus a new case in
+<code>test_orchestrator.py</code>); full suite 53/53.</p>
+<p><b>Fix 2 (infra, Colab notebook, not this repo):</b> the notebook's <code>ollama serve</code>
+cell launches the process with <code>stdout=subprocess.PIPE</code> but nothing ever read from that
+pipe. Once the server's own logging fills the OS pipe buffer, the write blocks and the process can
+stop servicing requests entirely &mdash; a plausible root cause for the read timeout above, not just
+a coincidence. Fixed by draining <code>ollama_proc.stdout</code> in a background thread; confirmed
+directly by inspecting the live notebook's cells before trusting the diagnosis, not taken on faith.
+This fix lives in the ephemeral Colab session, not in version control, so it needs to be re-applied
+on any future rebuild of that notebook.</p>
+</div>
+
+<h2>3. Fail-closed held under a much richer failure mix at N=100</h2>
+<div class="card">
+At 100 workers, the verifier's fail-closed paths caught a genuinely wider variety of malformed and
+self-inconsistent claims than any smaller run surfaced &mdash; unsupported computation operations
+(<code>"none"</code>, <code>"text"</code>), operands with no quote at all, operand text that doesn't
+appear in its own cited span, and six separate cases where the recomputed arithmetic flatly
+disagreed with the claimed number (e.g. <code>recomputed duration_minutes = 28, but claim asserts
+34</code>; <code>recomputed difference = -78.0, but claim asserts 0.5</code>). Every single one of
+these came back <code>rejected</code> or <code>unverified</code>, never <code>confirmed</code>
+&mdash; across 375 real claims and three independent verification methods, fail-closed did not slip
+once at this scale.
+</div>
+
+<h2>4. Malformed computation payloads: seen at every scale from N=5 up</h2>
+<div class="card">
+First flagged at N=5 (two real claims with a <code>computation</code> object missing a required
+key), the same pattern recurs at N=20 and N=100 &mdash; missing <code>quote</code>/<code>result</code>
+keys, plus new variants (<code>operation: "none"</code> with empty operands, an operand whose
+<code>value</code> is itself the claim's prose rather than a timestamp). The verifier fails closed on
+all of them rather than guessing or crashing. Several of the underlying claims are very likely true
+&mdash; the durations they assert are directly statable from source timestamps &mdash; so, consistent
+with the <a href="prompt-ab-move2.html">prompt A/B</a>'s finding, this remains a false-rejection risk
+pattern worth a scored bucket in Move 2's benchmark, not a correctness bug in the verifier itself.
+</div>
+
+<h2>5. Caution (N=5 only): some fabrication catches were infra-driven, not judge-driven</h2>
+<div class="card">
+Of the 5 injected fabrications at N=5, 3 were caught deterministically and 2 came back
+<code>unverified</code> because the LLM-judge fallback call itself timed out &mdash; correct
+fail-closed behavior, but it means that run's "5/5 fabrications caught" partly reflects infra
+flakiness under concurrent load rather than pure judge accuracy. At N=20 and N=100, all fabrication
+catches were genuine (no judge-timeout fail-closed among them), consistent with the pipe-deadlock fix
+removing the specific infra flakiness that caused N=5's judge timeouts.
+</div>
+
+<h2>6. The crash that broke N=200's first attempt: a new schema-echo variant</h2>
+<div class="card">
+The first N=200 attempt extracted all 746 real claims successfully (the expensive, remote-LLM-call
+phase) and then crashed 20 calls into verification:
+<div class="quote">AttributeError: 'dict' object has no attribute 'replace'
+  File "verifier\checks.py", line 19, in _normalize
+    text = text.replace(curly, straight)</div>
+One worker (<code>meridian_cache_r36</code>) produced three claims whose <code>quote</code> field
+was a JSON object, not a string:
+<div class="quote">"quote": {"verbatim source span this operand came from": "The incident was
+detected by an automated staleness monitor at 03:22 UTC and the broker partition was manually
+rebalanced at 03:27 UTC. Full cache freshness was restored by 03:41 UTC."}</div>
+That key text is copied verbatim from the extraction prompt's own <code>computation.operands[].quote</code>
+schema description &mdash; the worker appears to have started drafting a computed claim, abandoned
+it, and left the operand-shaped fragment glued onto the plain <code>quote</code> field of a claim it
+ultimately expressed without a <code>computation</code> object. This is a new manifestation of the
+same schema-echo failure family <a href="../decisions/adr-index.html">ADR-009/ADR-014</a> already
+documented (the model echoing its own prompt's instructional text into output) &mdash; previously
+seen as a whole placeholder string standing in for <code>quote</code>, this time as a fragment used
+as a dict key wrapping real content, in a field position (<code>quote</code>, not
+<code>computation.operands</code>) the anti-echo prompt fix was never written to check.
+<code>quote_round_trips()</code> assumed <code>claim.quote</code> was already a string and called
+<code>.replace()</code> on it directly, unguarded &mdash; unlike
+<code>computation_operands_round_trip()</code>, which already <code>str()</code>-coerces its operand
+<code>value</code>/<code>quote</code> fields for exactly this reason. Fixed by applying the same
+coercion in <code>quote_round_trips()</code>; one regression test added
+(<code>test_quote_round_trip_fails_closed_on_a_dict_quote</code>), full suite 54/54. Also added: a
+persistence write for extracted claims immediately after extraction and before verification, so a
+future crash in this phase can't discard ~40 minutes of already-completed remote LLM calls the way
+this one nearly did &mdash; the crashed run's 750 extracted claims were unrecoverable (this
+persistence write didn't exist yet) and had to be re-extracted from scratch on the next attempt.
+</div>
+
+<h2>7. All three re-surfaced dict-quote claims were caught clean &mdash; and two are exactly the facts Move 2 found workers never extract</h2>
+<div class="card">
+On the re-run, the same worker produced the identical malformed shape again for three claims (the
+str()-coercion makes this deterministic, not a sampling fluke): all three
+<code>rejected</code> ("quote does not appear in the source text, invented or altered"), zero
+crashes, zero false <code>confirmed</code>. Two of the three are notable for a different reason: they
+are near-exact matches for checklist items <a href="move2-results.html">Move 2's omission
+finding</a> reported as never extracted by any worker in either Move 2 run &mdash; "No customer data
+was exposed or corrupted" (meridian_cache's negative/scope-limiting fact) and "The incident had a
+total duration of 27 minutes" (meridian_cache's duration fact, and the same 27-minute figure Move 2's
+finding 4 already flagged as attempted-but-rejected on a different malformed-payload shape). This
+worker call did attempt both facts here &mdash; it just botched the output shape doing so. Consistent
+with Move 2's own read: the negative-fact gap looks like a worker-output-shape/prompting problem the
+model occasionally does attempt to close on its own, not a hard capability ceiling.
+</div>
+
+<h2>Caveats</h2>
+<div class="card small">
+None of these five runs used <code>temperature=0</code>, so confirm/reject/unverified counts across
+N are not a controlled comparison and should not be read as a scale-driven composition trend &mdash;
+per <a href="../decisions/adr-index.html">ADR-013</a>, a single run at fixed code is already known to
+swing run-to-run from sampling alone. What this page answers is narrower and now complete: does the
+swarm crash or break fail-closed as N scales from 1 to 200 &mdash; no, not after the fixes above.
+Rejection-rate composition (quote-format vs. computation-misuse vs. genuine content error) remains
+<a href="prompt-ab-move2.html">the prompt A/B</a>'s job, isolated from both sampling and scale on
+purpose. N=200 also ran on different infra than N=1&ndash;100 (a separate ngrok-tunneled remote
+instance, not the Colab-notebook <code>ollama serve</code> cell the N=20 pipe-deadlock fix targeted)
+&mdash; it completed with zero pipe-deadlock-shaped failures, but that's one clean run on different
+infra, not confirmation the original fix generalizes; it simply didn't need to fire here.
+</div>
+
+</div>
+</body>
+</html>

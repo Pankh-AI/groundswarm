@@ -1,0 +1,115 @@
+{
+  "scores": [
+    {
+      "condition": "groundswarm",
+      "bad_leaked": 0,
+      "bad_total": 20,
+      "good_reported": 10,
+      "good_total": 10,
+      "false_rejection": 0,
+      "per_category_leak": {
+        "unsupported": "0/5",
+        "unverifiable": "0/5",
+        "wrong_attribution": "0/5",
+        "incorrect_computation": "0/5"
+      }
+    },
+    {
+      "condition": "swarm_no_verification",
+      "bad_leaked": 20,
+      "bad_total": 20,
+      "good_reported": 10,
+      "good_total": 10,
+      "false_rejection": 0,
+      "per_category_leak": {
+        "unsupported": "5/5",
+        "unverifiable": "5/5",
+        "wrong_attribution": "5/5",
+        "incorrect_computation": "5/5"
+      }
+    },
+    {
+      "condition": "single_agent",
+      "bad_leaked": 20,
+      "bad_total": 20,
+      "good_reported": 10,
+      "good_total": 10,
+      "false_rejection": 0,
+      "per_category_leak": {
+        "unsupported": "5/5",
+        "unverifiable": "5/5",
+        "wrong_attribution": "5/5",
+        "incorrect_computation": "5/5"
+      }
+    }
+  ],
+  "omission": {
+    "groundswarm": [
+      2,
+      10,
+      [
+        "anchor_cdn: Anchor CDN's certificate incident affected only the api.anchorcdn.net hostname; other Anchor CDN hostnames were unaffected.",
+        "cobalt_storage: No write requests were affected by Cobalt Storage's degraded-node incident, and no data was lost.",
+        "cobalt_storage: 10 minutes elapsed between Cobalt Storage detecting the degraded node and draining it from the read path.",
+        "meridian_cache: No customer data was exposed or corrupted during Meridian Cache's stale-content incident.",
+        "meridian_cache: 27 minutes elapsed from the start of Meridian Cache's incident to full cache freshness being restored.",
+        "ridgeline_auth: Users with still-valid access tokens were not logged out during Ridgeline Auth's incident.",
+        "solace_queue: No messages were dropped during Solace Queue's consumer-lag incident, and the retention window was never approached.",
+        "solace_queue: 8 minutes elapsed between Solace Queue detecting the slow receiver and throttling the partner's webhook concurrency."
+      ]
+    ],
+    "swarm_no_verification": [
+      2,
+      10,
+      [
+        "anchor_cdn: Anchor CDN's certificate incident affected only the api.anchorcdn.net hostname; other Anchor CDN hostnames were unaffected.",
+        "cobalt_storage: No write requests were affected by Cobalt Storage's degraded-node incident, and no data was lost.",
+        "cobalt_storage: 10 minutes elapsed between Cobalt Storage detecting the degraded node and draining it from the read path.",
+        "meridian_cache: No customer data was exposed or corrupted during Meridian Cache's stale-content incident.",
+        "meridian_cache: 27 minutes elapsed from the start of Meridian Cache's incident to full cache freshness being restored.",
+        "ridgeline_auth: Users with still-valid access tokens were not logged out during Ridgeline Auth's incident.",
+        "solace_queue: No messages were dropped during Solace Queue's consumer-lag incident, and the retention window was never approached.",
+        "solace_queue: 8 minutes elapsed between Solace Queue detecting the slow receiver and throttling the partner's webhook concurrency."
+      ]
+    ],
+    "single_agent": [
+      0,
+      10,
+      [
+        "anchor_cdn: Anchor CDN's certificate incident affected only the api.anchorcdn.net hostname; other Anchor CDN hostnames were unaffected.",
+        "anchor_cdn: 15 minutes elapsed between Anchor CDN's on-call page and full edge rollout of the new certificate.",
+        "cobalt_storage: No write requests were affected by Cobalt Storage's degraded-node incident, and no data was lost.",
+        "cobalt_storage: 10 minutes elapsed between Cobalt Storage detecting the degraded node and draining it from the read path.",
+        "meridian_cache: No customer data was exposed or corrupted during Meridian Cache's stale-content incident.",
+        "meridian_cache: 27 minutes elapsed from the start of Meridian Cache's incident to full cache freshness being restored.",
+        "ridgeline_auth: Users with still-valid access tokens were not logged out during Ridgeline Auth's incident.",
+        "ridgeline_auth: 3 minutes elapsed between Ridgeline Auth's pool-saturation alert and the offending batch job being killed.",
+        "solace_queue: No messages were dropped during Solace Queue's consumer-lag incident, and the retention window was never approached.",
+        "solace_queue: 8 minutes elapsed between Solace Queue detecting the slow receiver and throttling the partner's webhook concurrency."
+      ]
+    ]
+  },
+  "cost": {
+    "groundswarm": {
+      "n_calls": 17,
+      "tokens": 8079,
+      "duration_s": 103.81200000000536
+    },
+    "swarm_no_verification": {
+      "n_calls": 6,
+      "tokens": 4336,
+      "duration_s": 76.35899999999674
+    },
+    "single_agent": {
+      "n_calls": 1,
+      "tokens": 1828,
+      "duration_s": 25.796999999991385
+    }
+  },
+  "real_claim_counts": {
+    "groundswarm": 20,
+    "swarm_no_verification": 20,
+    "single_agent": 5
+  },
+  "single_agent_dropped": 0
+}

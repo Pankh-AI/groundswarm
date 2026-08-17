@@ -16,6 +16,12 @@ class Claim:
     quote: str | None  # a verbatim quote from the source supporting this claim, if any
     source_path: str
     worker_id: str
+    # If the claim asserts a value derived by computing over source data (a
+    # duration, sum, or difference) rather than one stated outright, this
+    # carries {"operation": str, "operands": [{"value": str, "quote": str}, ...],
+    # "result": float}. The Verifier recomputes it independently rather than
+    # trusting the worker's arithmetic. None for claims with a plain quote.
+    computation: dict | None = None
 
 
 @dataclass

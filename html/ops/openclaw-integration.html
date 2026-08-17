@@ -1,0 +1,169 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Groundswarm &mdash; OpenClaw Gateway integration: manager, worker, and the first live smoke test</title>
+<style>
+  :root{--bg:#0f1115;--fg:#e6e9ef;--dim:#98a2b3;--card:#171a21;--line:#252a34;
+        --good:#3fb950;--bad:#f85149;--warn:#d29922;--acc:#58a6ff}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--fg);
+       font:15px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+  .wrap{max-width:1080px;margin:0 auto;padding:28px 20px 80px}
+  h1{font-size:24px;margin:0 0 4px} h2{font-size:17px;margin:30px 0 8px;color:var(--acc)}
+  .dim{color:var(--dim)} .small{font-size:13px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:16px 18px;margin:14px 0}
+  table{border-collapse:collapse;width:100%;font-size:13.5px;margin:10px 0}
+  .scroll{overflow-x:auto}
+  th,td{border-bottom:1px solid var(--line);padding:8px 9px;text-align:left;vertical-align:top}
+  th{color:var(--dim);font-weight:600;font-size:12px;text-transform:uppercase;letter-spacing:.03em}
+  code{background:#0b0d11;padding:1px 5px;border-radius:4px;font-size:13px}
+  a{color:var(--acc)}
+  .back{font-size:13px;margin-bottom:18px;display:inline-block}
+  .lead{font-size:15.5px;border-left:3px solid var(--acc);padding-left:14px;margin:16px 0}
+  .tag{display:inline-block;padding:2px 8px;border-radius:99px;font-size:11.5px;font-weight:700}
+  .t-done{background:#123018;color:var(--good)} .t-fail{background:#3a1418;color:var(--bad)}
+  .t-warn{background:#33280a;color:var(--warn)}
+  .quote{font-family:ui-monospace,Consolas,monospace;font-size:12.5px;background:#0b0d11;
+         padding:6px 8px;border-radius:6px;display:block;margin-top:4px;color:#c9d1d9;white-space:pre-wrap}
+  .good{color:var(--good)} .bad{color:var(--bad)} .warn{color:var(--warn)}
+  ol.steps li{margin:6px 0}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<a class="back" href="../index.html">&larr; Groundswarm hub</a>
+<h1>OpenClaw Gateway integration &mdash; manager, worker, and the first live smoke test</h1>
+<div class="dim">ADR-018's supporting record: the real architecture found by cloning and reading OpenClaw's own source, the merged design that resulted, and the debugging trail from a 404 all the way to a working extraction call.</div>
+
+<div class="lead">
+<b>Result: it works.</b> A real OpenClaw Gateway process, started and stopped entirely by Groundswarm's
+own code, ran a genuine agent turn against a local Ollama model and returned three correctly-quoted
+claims from a real source document over the same
+<a href="../decisions/adr-index.html">Worker</a> protocol <code>OllamaSimWorker</code> already
+implements. Two real bugs stood between "the Gateway starts" and that result, both root-caused to
+specific lines of OpenClaw source rather than guessed at, and both are recorded below so the fix isn't
+mistaken for a workaround.
+</div>
+
+<h2>What OpenClaw's architecture actually is</h2>
+<div class="card small">
+Not a stateless per-call worker process &mdash; a single always-on <b>Gateway</b> daemon
+(<code>node scripts/run-node.mjs --dev gateway</code>) multiplexing WebSocket control/RPC and HTTP on
+one port, discoverable only via a lock file it writes at
+<code>&lt;state_dir&gt;/tmp/openclaw/gateway.&lt;hash&gt;.lock</code> (JSON: <code>pid</code>,
+<code>port</code>, <code>startTime</code>, ...) &mdash; there is no fixed default port in source. This
+is why the original ADR-001 framing (OpenClaw instances <i>as</i> the worker runtime, one per worker)
+doesn't fit: OpenClaw is one persistent operator process, not a spawn-per-task binary.
+<p>Its <code>/v1/chat/completions</code> endpoint is not a bare completions passthrough. Reading
+<code>src/gateway/openai-http.ts</code> (1502 lines) in full: <code>handleOpenAiHttpRequest</code>
+translates the request into a genuine <code>agentCommandFromIngress()</code> agent run &mdash; the
+agent's configured tools, session and memory all apply &mdash; and wraps the agent's final text back
+into OpenAI chat-completion JSON. Passing a unique <code>user</code> field per request
+(<code>sessionPrefix: "openai"</code>) gives each call its own Gateway session, which is what keeps
+this compatible with N independent parallel Groundswarm workers instead of accidentally threading them
+through one shared OpenClaw conversation.</p>
+</div>
+
+<h2>The merged design (ADR-018)</h2>
+<div class="card small">
+Per the user's direction &mdash; merge, don't pick a side; Groundswarm manages OpenClaw's entire
+ops &mdash; two new modules:
+<table><thead><tr><th>Module</th><th>Owns</th></tr></thead><tbody>
+<tr><td><code>ops/openclaw_manager.py</code></td><td><code>OpenClawGatewayManager</code>: starts the
+Gateway subprocess, discovers its dynamically-assigned port by polling for a fresh lock file, health-checks
+it over HTTP, and tears down the full process tree on stop (<code>taskkill /PID &lt;lock-file pid&gt; /T /F</code>
+on Windows &mdash; the lock file's PID, not just the immediate <code>Popen</code> child, because dev-mode
+startup spawns rolldown/tsdown child processes for plugin bundling). Context-manager support
+(<code>__enter__</code>/<code>__exit__</code>).</td></tr>
+<tr><td><code>workers/openclaw_worker.py</code></td><td><code>OpenClawWorker</code>, the same
+<code>Worker</code> protocol <code>OllamaSimWorker</code> implements
+(<code>run(WorkerTask) -&gt; WorkerOutput</code>), calling the Gateway's real agent-backed
+<code>/v1/chat/completions</code> instead of Ollama directly. Same fail-closed idiom on transport
+failure: a Gateway that's unreachable degrades to zero claims, it does not crash the batch.</td></tr>
+</tbody></table>
+<p>Both are stdlib-only (<code>subprocess</code>, <code>urllib.request</code>, <code>json</code>,
+<code>pathlib</code>), matching <code>ollama_client.py</code>'s existing dependency policy
+(<code>pyproject.toml</code>: <code>dependencies = []</code>).</p>
+<p><b>Feedback loop:</b> scoped in intent, not yet built. The user's framing was explicit &mdash;
+"symbiosis, a feedback-optimized loop," not a one-way dispatch pipe. The verification signal
+Groundswarm already produces per claim (confirm/reject/fail-closed rate, per-source and per-worker
+reliability) is the natural input; how it should feed back into OpenClaw's own routing/prioritization
+is deliberately left open here rather than designed speculatively ahead of the base integration being
+proven. Tracked as follow-on work, not silently dropped.</p>
+</div>
+
+<h2>Debugging trail: 404 &rarr; 500 &rarr; root cause &rarr; 0 claims &rarr; 3 real claims</h2>
+<div class="card small">
+<ol class="steps">
+<li><b class="bad">404 on <code>/v1/chat/completions</code>.</b> Traced through
+<code>server-runtime-config.ts</code>: <code>openAiChatCompletionsEnabled</code> defaults
+<code>false</code>. Fix: <code>config set gateway.http.endpoints.chatCompletions.enabled true</code>.</li>
+<li><b class="bad">500, "Agent harness runtime &quot;codex&quot; is unavailable because its plugin
+registration is missing."</b> Root cause, found by reading
+<code>src/agents/harness/policy.ts</code> and <code>src/agents/openai-routing.ts</code>: any
+<code>openai/*</code>-provider model implicitly routes agent execution through the real Codex CLI
+harness (<code>resolveOpenAIImplicitAgentRuntime</code>) unless an explicit
+<code>agentRuntime</code> policy overrides it &mdash; by design, the same way Anthropic models route
+through the Claude Code CLI. This dev build has no Codex plugin registered, so every
+<code>openai/gpt-*</code> call failed. An earlier attempt to fix this via
+<code>agents.entries.dev.runtime.type = "embedded"</code> was the wrong config key entirely (a
+different type, <code>AgentRuntimeConfig</code>, than the one this resolution path reads,
+<code>AgentRuntimePolicyConfig</code>) and had no effect. The actual fix was routing the agent to a
+non-OpenAI provider, which skips this code path outright (<code>isOpenAIProvider()</code> gates it).</li>
+<li><b class="warn">Ollama models invisible to <code>models list</code> despite enabling the plugin.</b>
+Traced into <code>extensions/ollama/src/discovery-shared.ts</code>: discovery requires an explicit
+opt-in (a non-empty <code>apiKey</code> string on <code>models.providers.ollama</code>) or meaningful
+explicit provider config; <code>plugins.entries.ollama.enabled</code> and
+<code>...config.discovery.enabled</code> alone satisfy neither gate and silently no-op. Fix:
+<code>config set models.providers.ollama.apiKey "local-dev"</code> (any placeholder string), then
+<code>config set agents.entries.dev.model "ollama/dolphin3:latest"</code>, which validated clean.</li>
+<li><b class="warn">Call succeeded (200, real tokens) but parsed 0 claims.</b>
+<code>completion_tokens=72</code> on a multi-fact extraction task is a truncation signature, confirmed
+by the raw response being valid-looking but unclosed JSON. Root cause: <code>OpenClawWorker</code>
+never set <code>max_tokens</code> in the request payload, silently relying on an undocumented
+server-side default &mdash; the same omission <code>OllamaSimWorker</code> has, just never surfaced
+because direct Ollama calls in this codebase are shorter. Fix: added an explicit
+<code>max_tokens: int = 1024</code> field, set on every request.</li>
+<li><b class="good">Clean run.</b> 3 claims, each with a quote that round-trips into the source
+document, from a real local model via a real OpenClaw agent turn.</li>
+</ol>
+</div>
+
+<h2>Live smoke test result</h2>
+<div class="card small">
+<code>smoke_openclaw_worker.py</code>: manager starts the Gateway &rarr; <code>OpenClawWorker.run()</code>
+against <code>anchor_cdn_postmortem.txt</code> &rarr; manager stops the Gateway. Full cold run
+(build + Gateway start + agent turn) completes in well under the manager's 300s startup budget; the
+agent call itself took 30.0s, 4,926 prompt tokens, 134 completion tokens.
+<table><thead><tr><th>Claim</th><th>Quote (source-verbatim span)</th></tr></thead><tbody>
+<tr><td>The TLS certificate expiration caused 100% traffic failure on the specific hostname for 34 minutes.</td>
+<td class="quote">Roughly 100% of traffic to that specific hostname was affected...</td></tr>
+<tr><td>Expired API token used by renewal automation led to the expiry.</td>
+<td class="quote">The renewal failure was traced to an expired API token used by the certificate-renewal automation...</td></tr>
+<tr><td>On-call engineers resolved it within 16 minutes after being paged.</td>
+<td class="quote">On-call engineers were paged... manually issued a new certificate at 06:28 UTC, and completed rollout...</td></tr>
+</tbody></table>
+<p class="dim">Not yet run: these claims through Groundswarm's own <code>Verifier</code>
+(<code>quote_round_trips()</code> etc.) &mdash; this page confirms the OpenClaw transport/agent layer
+produces genuine, quote-grounded claims, not that they've cleared verification. That's the natural next
+smoke test once this integration graduates past a manual script.</p>
+</div>
+
+<h2>What's still open</h2>
+<div class="card small">
+<ul>
+<li>The feedback loop itself (verification outcome &rarr; OpenClaw routing/prioritization) is
+designed-in-intent only, per ADR-018 above &mdash; no code yet.</li>
+<li>This was validated with one dev agent, one local model, one source file, one call. Not yet run
+through the N-worker sweep harness or the Move-2 benchmark that gate the rest of Groundswarm's claims.</li>
+<li><code>OpenClawGatewayManager</code>'s process-tree teardown is Windows-specific
+(<code>taskkill /T /F</code>); untested on Linux/macOS.</li>
+</ul>
+</div>
+
+</div>
+</body>
+</html>

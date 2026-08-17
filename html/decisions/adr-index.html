@@ -139,6 +139,325 @@ looser default than intended, and confirm no org-wide Actions secrets are config
 public repo's workflows could read, before any CI is wired up for this repo.</p>
 </div>
 
+<div class="card">
+<div class="meta">ADR-009 <span class="tag t-dec">Decided: built</span></div>
+<h2>Add a third verification method for computed claims: independent arithmetic, not a quote match or an LLM judge</h2>
+The Verifier gained a third path (<code>verifier/arithmetic.py</code> + <code>Verifier._check_computation</code>),
+selected whenever a <code>Claim</code> carries a <code>computation</code> payload instead of a plain quote:
+each operand is quote-round-trip checked into the source exactly like today's deterministic path, then the
+arithmetic itself (currently <code>duration_minutes</code>, <code>sum</code>, <code>difference</code>) is
+independently recomputed in Python and compared to what the worker claimed. Unsupported operations or
+unparseable operands fail closed to <code>unverified</code>, same discipline as the judge path. Separately,
+<code>checks.py</code>'s <code>_normalize()</code> now folds curly quotes/dashes/ellipsis to their plain-ASCII
+equivalents before comparing.
+<p><b>Why:</b> the <a href="../ops/rejection-analysis.html">55-worker rejection analysis</a> found two real
+content errors in 234 verified claims that the original two-path verifier (quote match, LLM judge) could not
+have caught on principle: a worker asserted a 41-minute source-derived duration as "17 minutes," and a
+worker wrote a curly apostrophe where the source has a straight one, sinking an otherwise word-for-word
+correct quote. An LLM judge re-reasoning about arithmetic is exactly as unreliable as the worker that
+produced it in the first place &mdash; both are the same class of model making the same class of mistake — so
+this is a genuine third method, not the judge path in disguise: it fails closed the moment a number can't be
+independently recomputed, rather than asking a model whether the number "looks right."</p>
+<p><b>Scope:</b> deliberately narrow &mdash; three operations covering the patterns actually observed
+(timestamp deltas, sums, differences), not a general math verifier. The extraction worker's system prompt
+(<code>sim_worker.py</code>) now also explicitly forbids echoing the schema's own field-description text into
+the <code>quote</code> field, the single largest failure mode found (10 of 29 rejections) &mdash; not yet
+re-validated against a live swarm run to see how reliably dolphin3 follows the new instruction.</p>
+</div>
+
+<div class="card">
+<div class="meta">ADR-010 <span class="tag t-dec">Decided</span></div>
+<h2>Sequencing: re-validate the fix, then build a benchmark, then Memory &mdash; not the reverse</h2>
+Three moves, in order, gating each on the previous one's result rather than running them in
+parallel:
+<p><b>1. Re-validate the ADR-009 fix</b> before claiming it worked. Same 55-worker corpus, same
+config, only the code changed &mdash; compare raw rejection rate, fabrication catch rate, false
+vs. true rejections, quote-format vs. computation vs. other failure counts, and token/latency
+overhead against the archived pre-fix run. A worker-count sweep (1/5/20/55/100+) is a genuinely
+larger compute commitment on a single local Ollama instance and is scoped separately, gated on
+what this result shows.</p>
+<p><b>2. Build a Groundswarm benchmark</b> before Memory. The actual claim under test isn't "we
+have a verifier," it's <i>"Groundswarm produces fewer unsupported factual claims than an ordinary
+agent swarm while preserving useful answers,"</i> scored at the atomic claim level: supported /
+unsupported / unverifiable / incorrect computation / wrong attribution / omitted, against a single
+agent and the same swarm with verification disabled as controls.</p>
+<p><b>3. Only then build Memory</b>, and not as a vector-DB bolt-on: every entry carries its
+evidence (source id/version/span/retrieval time), its derivation (extractor, computation if any,
+dependencies), its verification (method, verdict, timestamp), and a state (VERIFIED / STALE /
+CONFLICTED / REJECTED) &mdash; so trust propagates source &rarr; claim &rarr; derived claim &rarr;
+memory &rarr; future answer, instead of resetting at each hop.</p>
+<p><b>Why this order:</b> Memory enlarges the attack surface (more write paths, more staleness
+states, more places a bad claim can hide) before the base extraction-and-verification primitive is
+proven to actually work end to end. Building Memory first would mean building a bigger, harder
+thing on top of a foundation whose real failure rate wasn't yet measured. The benchmark is more
+valuable than Memory at this stage because "we have a verifier" isn't a claim anyone should have to
+take on architecture alone &mdash; it's exactly what the 55-worker rejection analysis showed can't
+be assumed.</p>
+</div>
+
+<div class="card">
+<div class="meta">ADR-011 <span class="tag t-open">Open, scoped for Move 2</span></div>
+<h2>Evolve the verdict from a boolean into five gates</h2>
+Today's <code>VerificationResult.verdict</code> is <code>confirmed / rejected / unverified</code>,
+one boolean-ish outcome per claim. The planned evolution, to be built alongside the Move 2
+benchmark: <code>CLAIM_VALID</code>, <code>EVIDENCE_VALID</code>, <code>ATTRIBUTION_VALID</code>,
+<code>DERIVATION_VALID</code>, <code>FRESHNESS_VALID</code>, with <code>VERIFIED</code> defined as
+all required gates passing for that claim's shape.
+<p><b>Why open, not decided-and-built:</b> two of the five gates already exist under different
+names &mdash; <code>DERIVATION_VALID</code> is exactly what ADR-009's computation check does today,
+and <code>EVIDENCE_VALID</code> is what <code>quote_round_trips()</code> checks today. But
+<code>ATTRIBUTION_VALID</code> has never actually been exercised: every worker in every scenario so
+far sees exactly one source document, so there is no current test case where a claim could be
+attributed to the wrong source, and <code>FRESHNESS_VALID</code> depends on Memory's TTL/supersedes
+design (ADR-007), which isn't built yet. Formalizing five gates now, with two of them untestable,
+would be documentation theater. <a href="../caveats/limitations.html">Limitations</a> also now
+records a related, confirmed-real gap: <code>quote_round_trips()</code> proves evidence is real,
+not that it entails the claim &mdash; exactly the boundary <code>EVIDENCE_VALID</code> vs.
+<code>CLAIM_VALID</code> is meant to draw.</p>
+</div>
+
+<div class="card">
+<div class="meta">ADR-013 <span class="tag t-dec">Decided: measured</span></div>
+<h2>Move-1 result: crash-safety and arithmetic checks validated live; quote-discipline did not improve</h2>
+Two live re-runs of the 55-worker scenario after ADR-009 landed. Full writeup:
+<a href="../ops/move1-revalidation.html">Move 1 re-validation</a>. Run 1 crashed on a real
+<code>KeyError</code> (an operand missing its <code>quote</code> key), fixed and regression-tested;
+Run 2 completed clean, 5/5 fabrications caught. Raw rejection rate went <b>up</b>, 12.7% &rarr;
+33.1%, but reading all 59 rejected/unverified claims individually against source: the crash-class
+bug is confirmed fixed on real traffic (4 live instances now fail closed instead of crashing), the
+new arithmetic check caught 2 unambiguous genuine numeric errors no quote-match or judge could have
+caught, and the rate increase is otherwise a new worker-side failure mode (the model misusing the
+<code>computation</code> field itself &mdash; null quotes, non-numeric operand values, a cluster of
+hallucinated pseudo-HTML "quotes" from one worker call) stacking on the still-unsolved
+quote-paraphrasing problem, not a drop in factual accuracy.
+<p><b>Why decided, not still open:</b> the two things Move 1 existed to check &mdash; does the fix
+crash again under real traffic, does the new check catch real errors &mdash; both got direct,
+measured answers. A third thing (does the anti-echo prompt collapse the raw rejection rate) got a
+measured "no," which is itself a real result, not a blocker. A follow-up null-quote/value guard was
+also added the same session (same function, same failure class). Full suite: 51/51.</p>
+<p><b>Why not iterate on worker prompting again right now:</b> per ADR-010's sequencing, claim-level
+scoring buckets belong to Move 2's benchmark, not another ungated prompt tweak. Also confirmed: real
+claim count swung 229 &rarr; 194 &rarr; 151 across three runs of code that was identical for the
+last two &mdash; a single 55-worker run is not a stable rejection-rate estimate, which is why the
+worker-count sweep runs multiple repeats per source rather than one shot per scale point.</p>
+</div>
+
+<div class="card">
+<div class="meta">ADR-014 <span class="tag t-dec">Decided: measured</span></div>
+<h2>Deterministic A/B confirms ADR-009's anti-echo fix works, at a real recall cost</h2>
+A <code>temperature=0</code> paired A/B (old vs. new worker prompt, same 5 sources, 10 calls
+total, run against a Colab-hosted GPU Ollama instance) isolates the ADR-009 prompt change from
+sampling noise. Full writeup: <a href="../ops/prompt-ab-move2.html">prompt A/B</a>. Result: the
+schema-echo placeholder bug (10 of 29 rejections in the original analysis) reproduces
+deterministically under the old prompt on 2 of 5 sources and is completely absent from all 10
+new-prompt claims &mdash; the cleanest confirmation yet that the specific fix works, because it's a
+controlled paired comparison rather than a noisy full-swarm re-run. Two costs surfaced alongside
+it: a genuine recall regression (the new prompt drops real, source-supported claims on 3 of 5
+sources, not just re-wording them), and one concrete case of the <code>computation</code> field
+producing self-inconsistent arithmetic (recomputed 19 vs. claimed 34) on a claim that is almost
+certainly true &mdash; a false-rejection risk, not a caught error.
+<p><b>Why decided, not left open:</b> the question this A/B was scoped to answer &mdash; is the
+quote-discipline problem sampling noise or a real prompt-driven effect &mdash; has a direct,
+measured answer for the specific echo bug (real, prompt-driven, fixed). The recall regression and
+the computation false-rejection risk are new, real findings, but per ADR-010's sequencing they are
+inputs to Move 2's benchmark (claim-level scoring buckets, false-rejection cost as a first-class
+metric per ADR-012) rather than another round of ungated prompt iteration now.</p>
+</div>
+
+<div class="card">
+<div class="meta">ADR-015 <span class="tag t-dec">Decided: measured</span></div>
+<h2>N-worker sweep complete (1x&ndash;200x): two real crashes found and fixed, fail-closed holds at every scale</h2>
+Question A from the Move-1 follow-up (does the swarm crash or break fail-closed as N scales,
+independent of rejection composition). Full writeup:
+<a href="../ops/nworker-scale-sweep.html">N-worker scale sweep</a>. N=1 and N=5 completed clean
+first try. N=20's first attempt <b>crashed</b>: a mid-run network read-timeout on one worker's
+extraction call raised an uncaught <code>OllamaUnavailable</code> that propagated out of the
+orchestrator and killed the entire 20-worker batch. Fixed with two independent changes &mdash; a
+code-level fix (<code>OllamaSimWorker</code>/<code>Orchestrator</code> now fail closed per-call on
+a transport error instead of crashing the batch, two regression tests added, 53/53 passing) and an
+infra-level one (the Colab notebook's <code>ollama serve</code> subprocess had its stdout pipe going
+nowhere, a plausible pipe-buffer deadlock once logging filled it; fixed by draining it on a
+background thread). With both in place, N=20 and N=100 both ran clean on the next attempt &mdash;
+at N=100's scale (375 real claims), fail-closed caught a much richer mix of malformed computation
+payloads and outright arithmetic mismatches than any smaller run had produced, without a single
+false <code>confirmed</code>.
+<b>N=200 (2026-08-16, live remote dolphin3 via ngrok, not Colab-notebook-embedded)</b> extended the
+sweep past its previous ceiling and found a second, different crash: a worker echoed the extraction
+prompt's own operand-schema description text (<code>"verbatim source span this operand came
+from"</code>) as a dict key, wrapping a real quote as its value, and the whole malformed object
+landed in the claim's plain <code>quote</code> field instead of a string. <code>_normalize()</code>
+called <code>.replace()</code> on it directly and crashed the batch with <code>AttributeError</code>
+&mdash; never seen below N=200, a longer sweep surfacing a rarer shape, the same reason the N=20
+network-timeout crash didn't appear at N=1&ndash;5 either. Fixed by making
+<code>quote_round_trips()</code> <code>str()</code>-coerce the quote before normalizing, the same
+defensive idiom <code>computation_operands_round_trip()</code> already used for this exact operand
+shape; one regression test added, full suite 54/54. The re-run then completed clean: 746 real
+claims, 5/5 fabrications caught, and the 3 live instances of the same dict-quote shape that
+appeared this time were correctly <code>rejected</code>, not crashed on. A claims-persistence write
+was also added to the sweep script immediately after extraction (before verification runs), so a
+future verification-phase crash can no longer silently discard the expensive extraction compute the
+way this one nearly did.
+<p><b>Why decided, not still open:</b> the two things this sweep exists to check &mdash; does the
+swarm crash at higher N, does fail-closed hold under a wider failure mix at scale &mdash; both got
+direct, measured answers across the full 1x&ndash;200x range, and both real crashes found were
+fixed and regression-tested immediately, matching ADR-013's precedent for crash-class bugs rather
+than deferred to Move 2. Composition of rejections across N is explicitly
+out of scope here (that's <a href="../ops/prompt-ab-move2.html">the prompt A/B</a>'s job, run at
+fixed temperature on purpose) and not blocked on anything.</p>
+</div>
+
+<div class="card">
+<div class="meta">ADR-012 <span class="tag t-dec">Decided</span></div>
+<h2>Milestone name: Groundswarm V0.2 &mdash; Verified Beats Plausible</h2>
+Definition of done: on a fixed benchmark, Groundswarm demonstrates materially fewer unsupported
+claims than the identical unverified swarm, with measured false-rejection cost, compute overhead,
+and zero hidden verifier leakage reported alongside the win, not omitted.
+<p><b>Why name it now, before it's built:</b> naming the finish line before Move 2 starts is what
+keeps Move 2 from quietly turning into "add more features" &mdash; the benchmark work only counts
+once this specific, falsifiable comparison exists and Groundswarm wins it cleanly. Until then this
+is "another agent framework with a verifier," not a research contribution.</p>
+</div>
+
+<div class="card">
+<div class="meta">ADR-016 <span class="tag t-dec">Decided</span></div>
+<h2>Product pivot: open-source SDK/framework first, config/YAML-defined swarms, no UI for v1</h2>
+Three scoped decisions, all user-confirmed: (1) product research runs now, with the Move-2
+"Verified Beats Plausible" benchmark continuing as a <b>parallel, non-gating</b> workstream, not a
+prerequisite &mdash; both threads run at once, neither blocks the other. (2) target audience for v1
+is the open-source SDK/framework crowd, not self-serve SaaS or an enterprise-sales-led motion. (3)
+the v1 surface for defining a swarm is config/YAML, not a no-code visual builder and not a
+code-only SDK &mdash; technical users, no UI. Grounded in two research passes:
+<a href="../research/oss-packaging-landscape.html">OSS packaging &amp; monetization landscape</a>
+(8 comparable frameworks, 8 open-core monetization cases, and a new combo-check finding: nothing
+found combines declarative swarm config with independent live-source verification, strengthening
+the differentiation case already made in the <a href="../research/market-survey.html">market
+survey</a>) and <a href="../research/yaml-schema-precedent.html">YAML schema design precedent</a>
+(docker-compose, GitHub Actions' <code>permissions:</code> block, dbt, Kubernetes/OPA Gatekeeper,
+six agent-orchestration export formats). The actual schema, my own design call grounded in that
+research rather than delegated to it, is on <a href="../product/swarm-schema.html">the swarm-schema
+page</a>: sources/workers/verification as three unit types mapped 1:1 onto the existing
+<code>WorkerTask</code>/<code>Orchestrator</code>/<code>Verifier</code> code, fields marked real vs.
+reserved rather than overclaiming what's actually wired up, fail-closed at config-load time for an
+unresolved source reference &mdash; the same discipline the Verifier already applies at claim-check
+time.
+<p><b>Why parallel, not sequential:</b> the user's explicit direction. ADR-010's original
+re-validate&rarr;benchmark&rarr;Memory sequencing gated later, riskier work (Memory) on an earlier
+result being proven; product research and schema design carry a different risk profile &mdash; they
+don't enlarge Groundswarm's own attack surface the way Memory would, so there's no equivalent
+reason to gate them on Move 2 landing first. The recommendation to build Move 2 first was made and
+heard; the user's call to run both at once stands.</p>
+<p><b>Why declarative config, not a no-code builder or code-only SDK:</b> the packaging landscape
+research found declarative config is a real, viable, non-novel choice in this space (swarms and
+CrewAI both ship it), and the combo-check finding means pairing it with independent verification is
+still an open, unclaimed position &mdash; not a bet made in the absence of precedent.</p>
+</div>
+
+<div class="card">
+<div class="meta">ADR-017 <span class="tag t-dec">Decided: measured</span></div>
+<h2>Move-2 result: verification is the entire effect, at zero false-rejection cost</h2>
+Two live runs of the 30-claim ground-truth benchmark (5 sources &times; 6 categories) against a
+remote dolphin3:latest, per ADR-012's design. Full writeup:
+<a href="../ops/move2-results.html">Move 2 results</a>; raw per-call cost:
+<a href="../ops/move2-benchmark.html">observability page</a>. groundswarm caught <b>39 of 40</b>
+injected bad claims across both runs (97.5%) with <b>zero false rejections</b> of true claims;
+swarm_no_verification and single_agent &mdash; both reporting unconditionally, no Verifier call
+&mdash; leaked <b>40/40</b> in both runs, confirming the gap is attributable to the verification
+step itself, not to some upstream property of extraction. The one miss (run 1, an
+<code>unverifiable</code> claim wrongly confirmed by the LLM-judge fallback, correctly rejected on
+an identical re-run) is judge-path sampling variance, not a systemic hole &mdash; 0 false confirms
+on the deterministic quote/computation paths across both runs. Reading the real (non-injected)
+claims individually against source also surfaced two follow-on findings, neither of which this ADR
+closes: live instances of the <code>EVIDENCE_VALID</code>-vs-<code>CLAIM_VALID</code> gap already on
+record in <a href="../caveats/limitations.html">Limitations</a> (a real, round-tripping quote
+attached to free text asserting an unrelated, sometimes-wrong number), and a systematic omission
+pattern &mdash; negative/scope-limiting facts ("X was not affected," "no data was lost") are almost
+never extracted by any worker, in any run, in any of the three conditions.
+<p><b>Why decided, not still open:</b> the two things Move 2 existed to check &mdash; does
+verification measurably beat unconditional reporting, and at what false-rejection cost &mdash; both
+got direct, measured answers on real (not simulated) model output, per ADR-012's explicit
+definition of done. The two follow-on findings are real but separately scoped: the
+EVIDENCE_VALID/CLAIM_VALID instances feed ADR-011 (still <span class="tag t-open">Open</span> &mdash;
+this result gives it real test cases, it does not resolve it), and the omission pattern is a
+worker-prompting problem, not a verification one, tracked as a follow-up re-run rather than folded
+into this result.</p>
+<p><b>Why wrong_attribution doesn't close ADR-011:</b> all 5 <code>wrong_attribution</code>
+ground-truth claims were rejected cleanly, but through the existing <code>EVIDENCE_VALID</code>
+mechanism (the substituted quote genuinely isn't verbatim in that claim's declared source) &mdash;
+not through a dedicated attribution check. ADR-011's <code>ATTRIBUTION_VALID</code> gate is about a
+worker exposed to <i>multiple</i> sources misattributing a real quote between them; Move 2's
+workers, like every prior scenario, still see exactly one source each. That test case still doesn't
+exist.</p>
+</div>
+
+<div class="card">
+<div class="meta">ADR-018 <span class="tag t-dec">Decided: built and measured</span></div>
+<h2>Supersedes ADR-001: Groundswarm merges with and manages OpenClaw's Gateway, not just calls into it</h2>
+Cloning OpenClaw and reading its source directly (not just docs) showed ADR-001's original framing
+&mdash; "workers are OpenClaw instances" &mdash; doesn't fit OpenClaw's real architecture: a single
+always-on <b>Gateway</b> daemon, not a spawn-per-task binary. Per explicit user direction ("merge and
+get best of both, swarm manage the entire OpenClaw ops," then "symbiosis, a feedback-optimized loop"),
+the resolved design is: Groundswarm owns the Gateway's full lifecycle
+(<code>ops/openclaw_manager.py</code>: start, port-discover via the Gateway's own lock file,
+health-check, full-process-tree stop), and dispatches worker tasks through the Gateway's real
+agent-backed <code>/v1/chat/completions</code> endpoint (<code>workers/openclaw_worker.py</code>,
+implementing the same <code>Worker</code> protocol as <code>OllamaSimWorker</code>, one Gateway
+session per worker via a unique <code>user</code> field). A verification-outcome-driven feedback path
+back into OpenClaw's own routing is scoped in intent but not yet built. Full writeup, including the
+404&rarr;500&rarr;root-cause debugging trail and the first live smoke-test result (3 real,
+source-grounded claims through a genuine agent turn):
+<a href="../ops/openclaw-integration.html">OpenClaw Gateway integration</a>.
+<p><b>Why merge instead of the four narrower options considered</b> (revise ADR-001 to a thinner
+HTTP-only integration, build the shallow path anyway, attempt a deep fork-and-modify integration, or
+drop OpenClaw entirely): the user explicitly rejected all four in favor of Groundswarm actively owning
+OpenClaw's operational lifecycle end to end. This is viable specifically because
+<code>/v1/chat/completions</code> was confirmed, by reading <code>openai-http.ts</code> in full, to
+already exercise a genuine OpenClaw agent run rather than being a bare model passthrough &mdash; the
+"shallow" HTTP path and the "deep" real-agent-capability path turned out to be the same endpoint, not
+a tradeoff to pick between.</p>
+<p><b>Why decided-and-built, not left as an architecture note:</b> the design was carried all the way
+through a real clone, a real build, a real running Gateway process managed entirely by new Groundswarm
+code, and a real end-to-end extraction call &mdash; including two genuine bugs found and fixed along
+the way (an implicit OpenAI-provider &rarr; Codex-harness routing default, and a silent Ollama
+model-discovery opt-in gate) rather than an integration that only works on paper.</p>
+</div>
+
+<div class="card">
+<div class="meta">ADR-019 <span class="tag t-dec">Decided: built and measured</span></div>
+<h2>Feedback loop built and run live: same-session re-dispatch anchors the model on its first answer, fixed with a session per attempt</h2>
+The verification-outcome feedback loop ADR-018 scoped in intent is now real code, run against the
+real Gateway: <code>ops/feedback.py</code> tallies a batch's <code>VerificationResult</code>s per
+worker and generates a caution note once a worker's confirmed fraction drops below 80%;
+<code>OpenClawWorker.source_notes</code> injects it into that worker's next system prompt; a two-pass
+scenario runner dispatches all 5 real incident sources, verifies, flags the worst performer, and
+re-dispatches it. First full run: 27 claims, 18 confirmed / 9 rejected, <code>cobalt_storage</code>
+flagged at 0/4. The cautioned re-dispatch came back <b>byte-for-byte identical</b> to the original
+&mdash; a changed prompt producing zero change in output. Root cause, confirmed by reading the
+Gateway's own log rather than inferred: <code>OpenClawWorker</code> built its Gateway <code>user</code>
+key from <code>worker_id</code> alone, and <code>user</code> maps directly to a Gateway session
+(per <a href="../ops/openclaw-integration.html">ADR-018</a>) &mdash; so both calls landed in one
+ongoing OpenClaw conversation, and the agent anchored on repeating its first turn rather than
+re-solving the task. A control test with a fresh session but the same caution note produced a
+measurably different result (2/4 confirmed, a different failure mode entirely), confirming session
+reuse, not prompt content, was what the null result was actually holding fixed. Fix:
+<code>OpenClawWorker</code> now folds a per-worker_id attempt counter into the Gateway <code>user</code>
+key, so a re-dispatch of the same worker identity lands in a fresh session automatically. Full
+writeup, including the markdown-code-fence bug that separately caused a 0-claims-from-all-5-workers
+regression along the way: <a href="../ops/openclaw-feedback-loop.html">OpenClaw feedback loop</a>.
+<p><b>Re-validated in situ</b> through the actual product code path: <code>cobalt_storage</code>
+dispatched twice through one live worker instance, pass 2 carrying the real caution note the pipeline
+generated. Pass 1: 0/4 confirmed, all rejected as invented paraphrase quotes. Pass 2: 3/3 confirmed,
+every claim left <code>quote</code> null instead of fabricating one &mdash; exactly what the caution
+note asked for &mdash; and the raw response was no longer identical to pass 1.</p>
+<p><b>Why decided, not overclaimed:</b> the anchoring bug and its fix are established by direct
+evidence (byte-for-byte log comparison, a fresh-session control test, an in-product re-validation),
+not by a plausible story. What is <i>not</i> yet established: whether the caution note's specific
+wording is what improved pass 2, versus a fresh, uncautioned re-roll landing on better output by
+chance &mdash; pass 2 is confounded on both variables at once (n=1, cautioned and freshly-sampled
+together). Isolating that needs a controlled fresh-session A/B, WITH vs. WITHOUT the note, repeated
+&mdash; the same discipline ADR-014 already applied to the anti-echo prompt fix. Explicitly scoped as
+follow-up, not claimed here.</p>
+</div>
+
 </div>
 </body>
 </html>

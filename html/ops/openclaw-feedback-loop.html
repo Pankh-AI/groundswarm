@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Groundswarm &mdash; OpenClaw feedback loop: built, and a same-session anchoring bug that defeated it</title>
+<style>
+  :root{--bg:#0f1115;--fg:#e6e9ef;--dim:#98a2b3;--card:#171a21;--line:#252a34;
+        --good:#3fb950;--bad:#f85149;--warn:#d29922;--acc:#58a6ff}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--fg);
+       font:15px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+  .wrap{max-width:1080px;margin:0 auto;padding:28px 20px 80px}
+  h1{font-size:24px;margin:0 0 4px} h2{font-size:17px;margin:30px 0 8px;color:var(--acc)}
+  .dim{color:var(--dim)} .small{font-size:13px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:16px 18px;margin:14px 0}
+  table{border-collapse:collapse;width:100%;font-size:13.5px;margin:10px 0}
+  .scroll{overflow-x:auto}
+  th,td{border-bottom:1px solid var(--line);padding:8px 9px;text-align:left;vertical-align:top}
+  th{color:var(--dim);font-weight:600;font-size:12px;text-transform:uppercase;letter-spacing:.03em}
+  code{background:#0b0d11;padding:1px 5px;border-radius:4px;font-size:13px}
+  a{color:var(--acc)}
+  .back{font-size:13px;margin-bottom:18px;display:inline-block}
+  .lead{font-size:15.5px;border-left:3px solid var(--acc);padding-left:14px;margin:16px 0}
+  .tag{display:inline-block;padding:2px 8px;border-radius:99px;font-size:11.5px;font-weight:700}
+  .t-done{background:#123018;color:var(--good)} .t-fail{background:#3a1418;color:var(--bad)}
+  .t-warn{background:#33280a;color:var(--warn)}
+  .quote{font-family:ui-monospace,Consolas,monospace;font-size:12.5px;background:#0b0d11;
+         padding:6px 8px;border-radius:6px;display:block;margin-top:4px;color:#c9d1d9;white-space:pre-wrap}
+  .good{color:var(--good)} .bad{color:var(--bad)} .warn{color:var(--warn)}
+  ol.steps li{margin:6px 0}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<a class="back" href="../index.html">&larr; Groundswarm hub</a>
+<h1>OpenClaw feedback loop &mdash; built, and a same-session anchoring bug that defeated it</h1>
+<div class="dim">ADR-019's supporting record: the closed-loop pipeline actually running end to end through the real Gateway, the null result it first produced, the root cause traced live in the Gateway's own log rather than guessed at, the fix, and an honest read of what the fix does and doesn't yet prove.</div>
+
+<div class="lead">
+<b>Result: the loop runs end to end, and the first version of it didn't work &mdash; for a reason that
+took direct evidence to find.</b> Groundswarm's own <code>Verifier</code> output now reshapes a
+flagged worker's next dispatch through the real OpenClaw agent, not a simulated one. The first
+attempt produced a null result: a corrected system prompt came back with the byte-for-byte identical
+answer. The cause was the Gateway's session semantics, not the prompt content &mdash; confirmed by
+reading the raw agent responses in the Gateway's own log, not inferred from the verifier's output
+alone. Fixed by giving each dispatch attempt its own Gateway session; the in-product re-run then
+showed a real, different response and a real swing in confirmed claims. What that swing is and isn't
+evidence of is stated plainly in the last section, not left to be assumed.
+</div>
+
+<h2>What was built</h2>
+<div class="card small">
+<table><thead><tr><th>Module</th><th>Owns</th></tr></thead><tbody>
+<tr><td><code>ops/feedback.py</code></td><td><code>compute_reliability()</code> groups a batch of real
+<code>VerificationResult</code>s by <code>worker_id</code> and tallies confirmed/rejected/unverified;
+<code>SourceReliability.needs_caution</code> fires once a worker's confirmed fraction drops below
+<code>CAUTION_THRESHOLD = 0.8</code> (deliberately permissive &mdash; at single-digit per-worker sample
+sizes a stricter cut fires on noise as often as on a real problem); <code>caution_note()</code> renders
+a short instruction naming the observed rate, not a guessed cause, since the Verifier's per-claim
+rejection reasons aren't threaded through here.</td></tr>
+<tr><td><code>workers/openclaw_worker.py</code></td><td><code>OpenClawWorker.source_notes</code>: a
+per-<code>worker_id</code> caution string, appended to that worker's system prompt on its next
+dispatch if present. Writing into this dict is the entire mechanism &mdash; nothing else about
+OpenClaw's config, channel routing, or model choice is touched from Groundswarm.</td></tr>
+<tr><td><code>scenarios/incident_monitoring_swarm/run_scenario_openclaw.py</code></td><td>Two-pass live
+runner: dispatch all 5 real incident sources through <code>OpenClawWorker</code> &rarr;
+<code>Orchestrator</code> synthesis &rarr; <code>Verifier</code> on every claim &rarr;
+<code>compute_reliability()</code> &rarr; the worst performer gets a caution note and is re-dispatched
+&rarr; before/after comparison, all against the real Gateway, not a stub.</td></tr>
+</tbody></table>
+</div>
+
+<h2>Full pipeline run: real, end to end</h2>
+<div class="card small">
+5 workers (meridian_cache, anchor_cdn, solace_queue, ridgeline_auth, cobalt_storage), each a real
+<code>/v1/chat/completions</code> call against the OpenClaw Gateway's real agent-backed endpoint,
+synthesized by a separate <code>OllamaClient</code> call and independently checked by the
+<code>Verifier</code>: <b>27 claims &mdash; 18 confirmed, 9 rejected, 0 unverified</b> &mdash; plus a
+1,878-character coherent briefing from the synthesis step. <code>cobalt_storage</code> came back at
+0/4 confirmed, below the 80% caution threshold, and was selected as the worst performer for the
+feedback re-dispatch.
+</div>
+
+<h2>First blocker: every worker returned 0 claims</h2>
+<div class="card small">
+The very first full 5-worker run returned <b class="bad">0 claims from all 5 workers</b>. Tailing the
+Gateway's own log (<code>~/.openclaw-dev/gateway-managed.log</code>) directly, rather than trusting
+the empty result, showed real, valid-looking JSON completions on every call &mdash; wrapped in a
+markdown code fence (<code>```json ... ```</code>) despite the system prompt asking for strict JSON.
+<code>json.loads(raw)</code> in <code>OpenClawWorker.run()</code> failed on every single one, silently
+swallowed by the existing <code>except (json.JSONDecodeError, AttributeError): pass</code>. A real
+agent turn does this; a raw Ollama <code>json_mode=True</code> call in this codebase never has.
+<p><b>Fix, validated cheaply before trusting it on a full re-run:</b> added
+<code>response_format: {"type": "json_object"}</code> to the request payload, and a
+<code>_strip_code_fence()</code> regex helper applied before <code>json.loads()</code>. Checked first
+against the existing single-call smoke test (4 real claims back, no request error from the new field)
+before spending a full 5-worker batch on it &mdash; which then completed clean, producing the 27-claim
+result above.</p>
+</div>
+
+<h2>The null result: a corrected prompt, an identical answer</h2>
+<div class="card small">
+<code>cobalt_storage</code>'s caution-note re-dispatch came back <b>identical</b> to its original
+dispatch: 0/4 confirmed both times, and reading the Gateway log directly, the raw JSON text of the two
+responses was <b>byte-for-byte the same</b>. A changed system prompt produced no change at all in the
+output &mdash; not "a similar failure mode," the same characters.
+<p>Investigated rather than accepted: both passes used <code>OpenClawWorker</code> with the same
+<code>worker_id</code>, and at the time, <code>_chat()</code> built the Gateway's <code>user</code>
+field from <code>worker_id</code> alone (<code>user=f"groundswarm:{task.worker_id}"</code>). Per
+<a href="./openclaw-integration.html">the integration page</a>, <code>user</code> maps directly to a
+Gateway session key (<code>sessionPrefix: "openai"</code>) &mdash; so both calls landed in the same
+ongoing OpenClaw agent conversation. The hypothesis: a same-session follow-up reads as a
+mid-conversation nudge, not a fresh instruction, and the agent anchors on repeating its first turn's
+answer rather than re-solving the task.</p>
+<p><b>Tested directly</b> with a control script using a different <code>worker_id</code> (hence a
+genuinely fresh Gateway session) but the exact same caution note present from the very first turn
+against the same source. Result: measurably different &mdash; <b>2/4 confirmed</b>, and through a
+completely different failure mode entirely (the ADR-015-documented schema-echo dict-quote bug on the
+other 2, correctly caught and rejected by <code>checks.py</code>'s existing <code>str()</code>-coercion
+rather than crashing). Fresh session, same note text, different output &mdash; the session, not the
+prompt content in isolation, is what the anchored retry was actually holding fixed.</p>
+</div>
+
+<h2>Fix: a Gateway session per attempt, not per worker_id</h2>
+<div class="card small">
+<code>OpenClawWorker</code> now tracks a per-<code>worker_id</code> attempt counter
+(<code>_attempts: dict[str, int]</code>) and folds it into the Gateway <code>user</code> key:
+<code>user=f"groundswarm:{task.worker_id}:{attempt}"</code>. The same worker identity's second
+dispatch now lands in a fresh Gateway session automatically &mdash; no manual worker_id renaming
+required, unlike the standalone control script above.
+<p><b>Re-validated in situ</b>, through the actual product code path (not a hand-rolled diagnostic):
+<code>cobalt_storage</code> dispatched twice through one live <code>OpenClawWorker</code> instance,
+pass 2 carrying the same caution note the full pipeline run generated.</p>
+<table><thead><tr><th></th><th>Confirmed</th><th>Method / behavior</th></tr></thead><tbody>
+<tr><td>Pass 1 (attempt 0, no caution)</td><td class="bad">0 / 4</td><td>All 4 rejected,
+<code>deterministic</code> &mdash; every quote was a paraphrase splicing separated source spans, not
+a verbatim span</td></tr>
+<tr><td>Pass 2 (attempt 1, cautioned)</td><td class="good">3 / 3</td><td>All 3 confirmed,
+<code>llm_judge</code> &mdash; every claim left <code>quote</code> as <code>null</code> instead of
+inventing one</td></tr>
+</tbody></table>
+<p><code>raw_response</code> identical across passes: <b class="good">False</b> &mdash; the anchoring
+that produced the earlier null result is gone.</p>
+</div>
+
+<h2>What this does and doesn't prove</h2>
+<div class="card small">
+The specific behavior change in pass 2 &mdash; every claim set <code>quote: null</code> rather than a
+fabricated span &mdash; is exactly what the caution note's text asked for
+(<code>"leave quote null rather than guess at one"</code>), which is suggestive that the note's content
+did something. But this is <b>one sample</b>, and it is <b>confounded</b>: pass 2 is both "cautioned"
+and "a fresh independent draw from the model," and only the fresh-session control test above isolated
+"session freshness changes the output" &mdash; nothing run so far isolates the caution note's own
+wording from a fresh, uncautioned re-roll happening to land on better quotes by chance.
+<p>Closing that gap needs a proper controlled comparison: fresh session, same source, WITH vs. WITHOUT
+the caution note, repeated enough times to move past n=1 &mdash; the same discipline ADR-014 already
+applied to the anti-echo prompt fix, and scoped here the same way, as follow-up work rather than a
+claim made now. What <i>is</i> established, not provisional: the same-session anchoring bug was real,
+reproduced live, root-caused to a specific mechanism (Gateway session reuse) rather than guessed at,
+and the fix removes it &mdash; the loop can now change a flagged worker's next output at all, which the
+first version of it, measurably, could not.</p>
+</div>
+
+</div>
+</body>
+</html>

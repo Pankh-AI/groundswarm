@@ -2,7 +2,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from ..workers.base import Worker, WorkerOutput, WorkerTask
-from ..llm.ollama_client import OllamaClient
+from ..llm.ollama_client import OllamaClient, OllamaUnavailable
 
 SYNTHESIS_SYSTEM_PROMPT = (
     "You write a short risk briefing from a list of extracted findings. "
@@ -34,7 +34,12 @@ class Orchestrator:
             return OrchestrationResult(worker_outputs=worker_outputs, briefing="")
 
         findings_block = "\n".join(f"- ({c.worker_id}) {c.text}" for c in all_claims)
-        briefing = self.synth_client.generate(
-            f"Findings:\n{findings_block}", system=SYNTHESIS_SYSTEM_PROMPT
-        )
+        try:
+            briefing = self.synth_client.generate(
+                f"Findings:\n{findings_block}", system=SYNTHESIS_SYSTEM_PROMPT, label="synthesis"
+            )
+        except OllamaUnavailable:
+            # A synthesis-call failure must not discard the extraction workers' claims --
+            # they still get verified below; only the prose briefing is lost.
+            briefing = ""
         return OrchestrationResult(worker_outputs=worker_outputs, briefing=briefing)

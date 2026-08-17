@@ -77,6 +77,20 @@ against current public info rather than reuse this snapshot.
 </div>
 
 <div class="card">
+<h2>Quote round-trip proves the evidence is real, not that it supports the claim</h2>
+<code>quote_round_trips()</code> (<code>verifier/checks.py</code>) only checks that
+<code>claim.quote</code> appears verbatim in the source. It does not check that the quote actually
+<i>entails</i> <code>claim.text</code>. A claim like <code>text="Meridian Cache stores passwords in
+plaintext"</code> paired with <code>quote="Meridian Cache"</code> (a real two-word substring of any
+Meridian Cache postmortem) would currently pass the deterministic check, because the check only
+asks "does this text exist in the source," never "does this text support that claim." This hasn't
+shown up in the swarm runs so far because the model tends to quote genuinely relevant spans, not
+because anything stops it from doing otherwise. This is the same distinction the "EVIDENCE_VALID
+vs CLAIM_VALID" gate split targets, and it's a real, currently-unguarded gap, not a hypothetical
+one, first confirmed while responding to a request to build math/numeric verification.
+</div>
+
+<div class="card">
 <h2>GitHub portfolio cross-check deliberately not performed</h2>
 The original research request included checking the project owner's own GitHub activity for
 relevant context. No GitHub remote is configured on this local repository, and pursuing this

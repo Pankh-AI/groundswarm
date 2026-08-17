@@ -1,0 +1,258 @@
+[
+  {
+    "worker_id": "meridian_cache_r1",
+    "source": "meridian_cache_postmortem.txt",
+    "text": "22% of read requests received content older than the configured 5-minute freshness window.",
+    "quote": "Approximately 22% of read requests during the incident window received content older than the configured 5-minute freshness window.",
+    "computation": null,
+    "verdict": "confirmed",
+    "method": "deterministic",
+    "reason": "quote round-trips into the live-refetched source",
+    "is_injected_fabrication": false
+  },
+  {
+    "worker_id": "meridian_cache_r1",
+    "source": "meridian_cache_postmortem.txt",
+    "text": "The incident lasted 27 minutes.",
+    "quote": null,
+    "computation": {
+      "operation": "duration_minutes",
+      "operands": [
+        {
+          "value": "Starting at 03:14 UTC on 2026-05-11,"
+        },
+        {
+          "value": "The incident was detected by an automated staleness monitor at 03:22 UTC and the broker partition was manually rebalanced at 03:27 UTC. Full cache freshness was restored by 03:41 UTC,"
+        }
+      ],
+      "result": 27
+    },
+    "verdict": "unverified",
+    "method": "fail_closed",
+    "reason": "computation payload malformed: 'quote'",
+    "is_injected_fabrication": false
+  },
+  {
+    "worker_id": "anchor_cdn_r1",
+    "source": "anchor_cdn_postmortem.txt",
+    "text": "Traffic to Anchor CDN's api.anchorcdn.net was down for 34 minutes due to an expired TLS certificate.",
+    "quote": "certificate validation errors for 34 minutes",
+    "computation": null,
+    "verdict": "confirmed",
+    "method": "deterministic",
+    "reason": "quote round-trips into the live-refetched source",
+    "is_injected_fabrication": false
+  },
+  {
+    "worker_id": "anchor_cdn_r1",
+    "source": "anchor_cdn_postmortem.txt",
+    "text": "All traffic to api.anchorcdn.net was affected, but not to other Anchor CDN hostnames.",
+    "quote": "Roughly 100% of traffic to that specific hostname was affected",
+    "computation": null,
+    "verdict": "confirmed",
+    "method": "deterministic",
+    "reason": "quote round-trips into the live-refetched source",
+    "is_injected_fabrication": false
+  },
+  {
+    "worker_id": "anchor_cdn_r1",
+    "source": "anchor_cdn_postmortem.txt",
+    "text": "The engineers resolved the issue in 14 minutes.",
+    "quote": "manually issued a new certificate at 06:28 UTC, and completed rollout to all edge nodes by 06:34 UTC",
+    "computation": null,
+    "verdict": "confirmed",
+    "method": "deterministic",
+    "reason": "quote round-trips into the live-refetched source",
+    "is_injected_fabrication": false
+  },
+  {
+    "worker_id": "solace_queue_r1",
+    "source": "solace_queue_postmortem.txt",
+    "text": "Consumer lag grew to approximately 340,000 unacknowledged messages at peak, delaying order-event delivery by up to 19 minutes for affected customers.",
+    "quote": "Consumer lag grew to approximately 340,000 unacknowledged messages at peak, delaying order-event delivery by up to 19 minutes for affected customers.",
+    "computation": null,
+    "verdict": "confirmed",
+    "method": "deterministic",
+    "reason": "quote round-trips into the live-refetched source",
+    "is_injected_fabrication": false
+  },
+  {
+    "worker_id": "solace_queue_r1",
+    "source": "solace_queue_postmortem.txt",
+    "text": "Full backlog drain completed at 12:52 UTC.",
+    "quote": "Full backlog drain completed at 12:52 UTC.",
+    "computation": null,
+    "verdict": "confirmed",
+    "method": "deterministic",
+    "reason": "quote round-trips into the live-refetched source",
+    "is_injected_fabrication": false
+  },
+  {
+    "worker_id": "solace_queue_r1",
+    "source": "solace_queue_postmortem.txt",
+    "text": "Solace Queue is adding per-partner concurrency limits by default for all new webhook integrations and a consumer-lag alert threshold of 50,000 messages.",
+    "quote": "Solace Queue is adding per-partner concurrency limits by default for all new webhook integrations and a consumer-lag alert threshold of 50,000 messages.",
+    "computation": null,
+    "verdict": "confirmed",
+    "method": "deterministic",
+    "reason": "quote round-trips into the live-refetched source",
+    "is_injected_fabrication": false
+  },
+  {
+    "worker_id": "ridgeline_auth_r1",
+    "source": "ridgeline_auth_postmortem.txt",
+    "text": "The incident was caused by a misconfigured batch job.",
+    "quote": "A misconfigured batch job that opened connections without releasing them.",
+    "computation": null,
+    "verdict": "confirmed",
+    "method": "deterministic",
+    "reason": "quote round-trips into the live-refetched source",
+    "is_injected_fabrication": false
+  },
+  {
+    "worker_id": "ridgeline_auth_r1",
+    "source": "ridgeline_auth_postmortem.txt",
+    "text": "The incident lasted 22 minutes.",
+    "quote": null,
+    "computation": {
+      "operation": "duration_minutes",
+      "operands": [
+        {
+          "value": "20:02 UTC on 2026-07-15",
+          "quote": "At 20:02 UTC on 2026-07-15,"
+        },
+        {
+          "value": "20:24 UTC on 2026-07-15",
+          "quote": "The batch job was identified via connection-pool saturation alerts at 20:11 UTC and killed at 20:14 UTC,"
+        }
+      ]
+    },
+    "verdict": "unverified",
+    "method": "fail_closed",
+    "reason": "computation payload malformed: 'result'",
+    "is_injected_fabrication": false
+  },
+  {
+    "worker_id": "ridgeline_auth_r1",
+    "source": "ridgeline_auth_postmortem.txt",
+    "text": "Approximately 6% of session-refresh requests failed during the incident.",
+    "quote": "Approximately 6% of session-refresh requests failed during the 22-minute incident window;",
+    "computation": null,
+    "verdict": "confirmed",
+    "method": "deterministic",
+    "reason": "quote round-trips into the live-refetched source",
+    "is_injected_fabrication": false
+  },
+  {
+    "worker_id": "ridgeline_auth_r1",
+    "source": "ridgeline_auth_postmortem.txt",
+    "text": "No credentials or session data were exposed during the incident.",
+    "quote": "No credentials or session data were exposed.",
+    "computation": {
+      "operation": "duration_minutes",
+      "operands": [
+        {
+          "value": "20:11 UTC",
+          "quote": "The batch job was identified via connection-pool saturation alerts at 20:11 UTC"
+        },
+        {
+          "value": "20:14 UTC",
+          "quote": "and killed at 20:14 UTC"
+        }
+      ],
+      "result": 3
+    },
+    "verdict": "confirmed",
+    "method": "computation",
+    "reason": "recomputed duration_minutes = 3, matches claimed 3",
+    "is_injected_fabrication": false
+  },
+  {
+    "worker_id": "ridgeline_auth_r1",
+    "source": "ridgeline_auth_postmortem.txt",
+    "text": "The incident led to the proposal of a solution to add a hard connection-count cap to all batch jobs.",
+    "quote": "Ridgeline Auth is adding a hard connection-count cap to all batch jobs...",
+    "computation": null,
+    "verdict": "rejected",
+    "method": "deterministic",
+    "reason": "quote does not appear in the source text, invented or altered",
+    "is_injected_fabrication": false
+  },
+  {
+    "worker_id": "ridgeline_auth_r1",
+    "source": "ridgeline_auth_postmortem.txt",
+    "text": "A separate connection pool is now exclusively reserved for the session-refresh endpoint.",
+    "quote": "and a separate, smaller connection pool reserved exclusively for the session-refresh endpoint.",
+    "computation": null,
+    "verdict": "confirmed",
+    "method": "deterministic",
+    "reason": "quote round-trips into the live-refetched source",
+    "is_injected_fabrication": false
+  },
+  {
+    "worker_id": "cobalt_storage_r1",
+    "source": "cobalt_storage_postmortem.txt",
+    "text": "Approximately 3% of read requests routed to that node experienced latency above 2 seconds, versus a normal p99 of 80 milliseconds, for a duration of 51 minutes.",
+    "quote": "Approximately 3% of read requests routed to that node experienced latency above 2 seconds, versus a normal p99 of 80 milliseconds, for a duration of 51 minutes.",
+    "computation": null,
+    "verdict": "confirmed",
+    "method": "deterministic",
+    "reason": "quote round-trips into the live-refetched source",
+    "is_injected_fabrication": false
+  },
+  {
+    "worker_id": "injected_by_script",
+    "source": "meridian_cache_postmortem.txt",
+    "text": "Meridian Cache's stale-content incident exposed customer payment data.",
+    "quote": "customer payment data was exposed during the stale-content incident",
+    "computation": null,
+    "verdict": "rejected",
+    "method": "deterministic",
+    "reason": "quote does not appear in the source text, invented or altered",
+    "is_injected_fabrication": true
+  },
+  {
+    "worker_id": "injected_by_script",
+    "source": "anchor_cdn_postmortem.txt",
+    "text": "Anchor CDN's certificate incident affected all customer hostnames, not just api.anchorcdn.net.",
+    "quote": null,
+    "computation": null,
+    "verdict": "unverified",
+    "method": "fail_closed",
+    "reason": "judge unreachable: could not reach Ollama at https://spears-screw-construct-starter.trycloudflare.com: The read operation timed out",
+    "is_injected_fabrication": true
+  },
+  {
+    "worker_id": "injected_by_script",
+    "source": "solace_queue_postmortem.txt",
+    "text": "Solace Queue permanently lost 340,000 order-event messages during the backlog.",
+    "quote": "340,000 order-event messages were permanently lost",
+    "computation": null,
+    "verdict": "rejected",
+    "method": "deterministic",
+    "reason": "quote does not appear in the source text, invented or altered",
+    "is_injected_fabrication": true
+  },
+  {
+    "worker_id": "injected_by_script",
+    "source": "ridgeline_auth_postmortem.txt",
+    "text": "Ridgeline Auth's connection pool exhaustion caused a full site-wide outage lasting six hours.",
+    "quote": null,
+    "computation": null,
+    "verdict": "unverified",
+    "method": "fail_closed",
+    "reason": "judge unreachable: could not reach Ollama at https://spears-screw-construct-starter.trycloudflare.com: The read operation timed out",
+    "is_injected_fabrication": true
+  },
+  {
+    "worker_id": "injected_by_script",
+    "source": "cobalt_storage_postmortem.txt",
+    "text": "Cobalt Storage lost customer data because only one replica of each object existed.",
+    "quote": "only one replica of each object existed",
+    "computation": null,
+    "verdict": "rejected",
+    "method": "deterministic",
+    "reason": "quote does not appear in the source text, invented or altered",
+    "is_injected_fabrication": true
+  }
+]

@@ -1,0 +1,184 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Groundswarm &mdash; Move 1: re-validating the ADR-009 fix against a live re-run</title>
+<style>
+  :root{--bg:#0f1115;--fg:#e6e9ef;--dim:#98a2b3;--card:#171a21;--line:#252a34;
+        --good:#3fb950;--bad:#f85149;--warn:#d29922;--acc:#58a6ff}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--fg);
+       font:15px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+  .wrap{max-width:1080px;margin:0 auto;padding:28px 20px 80px}
+  h1{font-size:24px;margin:0 0 4px} h2{font-size:17px;margin:30px 0 8px;color:var(--acc)}
+  .dim{color:var(--dim)} .small{font-size:13px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:16px 18px;margin:14px 0}
+  table{border-collapse:collapse;width:100%;font-size:13.5px;margin:10px 0}
+  .scroll{overflow-x:auto}
+  th,td{border-bottom:1px solid var(--line);padding:8px 9px;text-align:left;vertical-align:top}
+  th{color:var(--dim);font-weight:600;font-size:12px;text-transform:uppercase;letter-spacing:.03em}
+  code{background:#0b0d11;padding:1px 5px;border-radius:4px;font-size:13px}
+  a{color:var(--acc)}
+  .back{font-size:13px;margin-bottom:18px;display:inline-block}
+  .lead{font-size:15.5px;border-left:3px solid var(--acc);padding-left:14px;margin:16px 0}
+  .tag{display:inline-block;padding:2px 8px;border-radius:99px;font-size:11.5px;font-weight:700}
+  .t-done{background:#123018;color:var(--good)} .t-fail{background:#3a1418;color:var(--bad)}
+  .t-warn{background:#33280a;color:var(--warn)}
+  .num{text-align:right;font-variant-numeric:tabular-nums}
+  .stat{display:inline-block;min-width:170px;margin:6px 22px 6px 0}
+  .stat b{display:block;font-size:20px} .stat span{color:var(--dim);font-size:12px}
+  .quote{font-family:ui-monospace,Consolas,monospace;font-size:12.5px;background:#0b0d11;
+         padding:6px 8px;border-radius:6px;display:block;margin-top:4px;color:#c9d1d9;white-space:pre-wrap}
+  .good{color:var(--good)} .bad{color:var(--bad)} .warn{color:var(--warn)}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<a class="back" href="../index.html">&larr; Groundswarm hub</a>
+<h1>Move 1 &mdash; re-validating the ADR-009 fix against a live re-run</h1>
+<div class="dim">ADR-010's Move 1: don't claim the fix worked without measuring it. This page is that measurement &mdash; two live re-runs of the same 55-worker scenario, after the code changed, compared directly against the archived pre-fix run in <a href="rejection-analysis.html">rejection-analysis.html</a>.</div>
+
+<div class="lead">
+The honest headline: the crash-safety fix and the new arithmetic-recomputation check both
+<b class="good">validated on real production traffic</b>, including catching the exact crash-class
+bug live. But the raw rejection rate <b class="bad">did not go down &mdash; it went up</b>, from
+12.7% to 33.1%. That is not the fix failing; every rejection was read individually against source,
+and the increase is almost entirely a <i>new</i> worker-side failure mode (the model misusing the
+new <code>computation</code> field) stacking on top of the pre-existing, still-unsolved
+quote-paraphrasing problem &mdash; not new evidence that the swarm's underlying facts got less
+accurate.
+</div>
+
+<h2>What happened, in order</h2>
+<div class="card small">
+<b>Run 1</b> (<code>bykp22xko</code>) &mdash; crashed after 5 workers' worth of extraction, with a
+live <code>KeyError: 'quote'</code>: dolphin3 started using the new <code>computation</code> field
+(proof the ADR-009 prompt fix landed) but emitted at least one operand missing its
+<code>"quote"</code> key entirely, which <code>computation_operands_round_trip()</code> accessed
+unguarded. Fixed by moving that access inside the same <code>try/except (KeyError, TypeError)</code>
+that already caught malformed <code>operation</code>/<code>operands</code>/<code>result</code>
+keys, plus two regression tests reproducing the exact shape. Full suite green (49/49) before
+re-running.<br><br>
+<b>Run 2</b> (<code>bdgfa2fet</code>) &mdash; completed clean, exit 0, all 5/5 fabrications caught.
+This page's numbers are from this run.<br><br>
+<b>Follow-up fix, same session</b> &mdash; reading Run 2's output surfaced a second, smaller gap in
+the same function: an operand with JSON <code>null</code> for <code>quote</code> or
+<code>value</code> (present key, empty content) doesn't raise <code>KeyError</code>, so it fell
+through to <code>str(None)</code> &rarr; the literal text <code>"None"</code>, producing a
+misleading rejection reason ("quote does not appear in the source") when the real problem was that
+the worker provided nothing at all. Now checked explicitly with a clear reason; two regression
+tests added. Full suite green (51/51).
+</div>
+
+<h2>Headline comparison</h2>
+<div class="card">
+<div class="stat"><b>229 &rarr; 151</b><span>real claims verified (run-to-run variance, not a code effect &mdash; see caveat below)</span></div>
+<div class="stat"><b class="bad">12.7% &rarr; 33.1%</b><span>raw rejection rate</span></div>
+<div class="stat"><b>0 &rarr; 9</b><span>unverified / fail_closed (all correct behavior, see below)</span></div>
+<div class="stat"><b>5 / 5 &rarr; 5 / 5</b><span>injected fabrications caught, both runs</span></div>
+<div class="stat"><b>0 &rarr; 0</b><span>crashes on the second attempt (1 crash on the first, now fixed)</span></div>
+</div>
+
+<div class="scroll"><table><thead>
+<tr><th></th><th>Before (archived)</th><th>After (this run)</th></tr>
+</thead><tbody>
+<tr><td>Real claims</td><td class="num">229</td><td class="num">151</td></tr>
+<tr><td>Confirmed</td><td class="num">200</td><td class="num">92</td></tr>
+<tr><td>Rejected</td><td class="num">29 (12.7%)</td><td class="num">50 (33.1%)</td></tr>
+<tr><td>Unverified (fail_closed)</td><td class="num">0</td><td class="num">9</td></tr>
+<tr><td>Rejected by method</td><td><code>deterministic: 28, llm_judge: 1</code></td><td><code>deterministic: 36, computation: 14</code></td></tr>
+<tr><td>Fabrications caught</td><td class="num">5 / 5</td><td class="num">5 / 5</td></tr>
+</tbody></table></div>
+
+<h2>1. What actually validated &mdash; the crash fix, confirmed on live traffic</h2>
+<div class="card">
+Of the 9 <code>unverified</code>/<code>fail_closed</code> claims in this run, <b>4 are the exact
+crash-class bug</b> from Run 1 (<code>meridian_cache_r1</code>, <code>meridian_cache_r4</code>,
+<code>meridian_cache_r9</code>, <code>solace_queue_r6</code>: <code>computation payload malformed:
+'quote'</code>) &mdash; a missing operand key that used to kill the entire run now correctly resolves
+to one claim failing closed. This is not a hypothetical regression test passing; it's the same
+failure shape happening again in real dolphin3 output and being handled correctly the second time.
+A 5th (<code>anchor_cdn_r5</code>, missing <code>'result'</code>) is the same family. The remaining
+4 are new-but-related shapes (an operation literally named <code>"none"</code> with zero operands,
+a <code>sum</code> over a non-numeric operand, a one-operand <code>duration_minutes</code>) &mdash;
+all correctly refused rather than guessed at. Zero crashes, zero silent passes, across all 9.
+</div>
+
+<h2>2. What actually validated &mdash; the computation check catching real arithmetic errors</h2>
+<div class="card">
+Of the 14 <code>computation</code>-method rejections, 2 are unambiguous, exactly the class of bug
+ADR-009 exists to catch:
+<div class="quote">anchor_cdn_r4: recomputed duration_minutes = 28, but claim asserted 34
+ridgeline_auth_r7: "errors starting at 20:02 UTC until it was resolved at 20:14 UTC, a duration of 22 minutes" &mdash; recomputed = 12</div>
+Neither of these has any quote-formatting problem &mdash; the operands round-tripped into source
+just fine. The number itself was wrong, and only independent recomputation (not a quote match, not
+an LLM judge re-deriving the same arithmetic) could have caught it. This is the direct, positive
+result: the third verification method is pulling its weight on real model output, not just on the
+hand-built test fixtures.
+</div>
+
+<h2>3. What did <i>not</i> validate &mdash; the anti-echo prompt fix, and a new failure surface</h2>
+<div class="card">
+The other 12 of 14 computation rejections and the great majority of the 36 deterministic rejections
+are <b>not</b> genuine content errors. Reading all 50 individually against source:
+<ul>
+<li><b>~10 of 14 computation rejections</b> are the worker misusing the new field itself: attaching
+a <code>computation</code> object to a claim that isn't actually a derived number (e.g. a claim
+about a mitigation plan, or "no data was lost"), with operand <code>value</code> fields like
+<code>"..."</code> or a full clause instead of a number, or a <code>quote</code> that's an empty
+string. Two more (<code>solace_queue_r7</code>: recomputed 1432 vs claimed 8;
+<code>cobalt_storage_r11</code>: recomputed 104 vs claimed 1) have implausibly large deltas that
+look like the worker picked the wrong two timestamps/numbers to feed the operation, not that the
+claim text itself is false.</li>
+<li><b>~30+ of 36 deterministic rejections</b> are the same paraphrase/non-verbatim-quote pattern
+already documented in <a href="rejection-analysis.html">rejection-analysis.html</a> &mdash; the
+model still doesn't reliably copy the source verbatim into <code>quote</code> even with the
+anti-echo instruction in place. The placeholder-echo failure mode specifically (the literal schema
+description text) appears gone from this sample; paraphrasing is not.</li>
+<li><b>New this run:</b> a single worker call, <code>cobalt_storage_r1</code>, produced 5 quotes
+that look like hallucinated HTML/CSS fragments &mdash; e.g.
+<span class="quote">&lt;span class="highlight/degraded-disk\';&gt;&gt; failed hardware</span>
+&mdash; text that never existed in the source at all, not a paraphrase or truncation of something
+real. One <code>anchor_cdn_r8</code> quote came back as the literal string
+<code>&lt;PRESIDIO_ANONYMIZED_PERSON&gt; automation, expired API token</code>. Both are the model
+generating garbage in the quote field for that specific call, correctly rejected, but a failure mode
+not seen in the pre-fix baseline.</li>
+</ul>
+Net read: the crash-safety and arithmetic fixes are real, validated wins. The prompt-level fix for
+quote discipline is <b>not yet working</b>, and the new <code>computation</code> field gave the
+model a second field to be undisciplined in, which is why the raw rejection rate went up rather
+than down. This is squarely a <b>worker prompt-engineering</b> problem, not a verifier defect &mdash;
+consistent with every rejection-analysis finding so far: the verifier has not yet let a single
+fabrication or a single confidently-wrong number through, in either run.
+</div>
+
+<h2>Methodological caveat: single-run point estimates aren't stable</h2>
+<div class="card small">
+Real claim count moved <b>229 &rarr; 194 (Run 1, crashed) &rarr; 151 (Run 2)</b> across three runs of
+what is, for the last two, <i>identical</i> code &mdash; a ~22% swing between two back-to-back runs
+with nothing but dolphin3's own sampling variance as the difference. A single 55-worker run's raw
+rejection rate is therefore not a stable estimate of anything; it should be read as one sample, not
+a verdict. This is exactly why the <a href="#next">worker-count sweep</a> below is designed to run
+multiple repeats per source rather than one run per scale point &mdash; and why Move 2's benchmark
+(<a href="../decisions/adr-index.html">ADR-010</a>) will need repeated trials, not single-shot
+comparisons, to say anything the small-n data here can't already contradict on the next run.
+</div>
+
+<h2 id="next">What's next</h2>
+<div class="card small">
+Per ADR-010, the worker-count sweep (N=1/5/20/100, same fabrications, same base sources) runs next
+&mdash; primarily to check that crash-safety and fail-closed behavior hold as call volume scales,
+and secondarily to get a first read on whether rejection-rate composition (paraphrase vs.
+computation-misuse vs. genuine error) shifts with scale. It is explicitly not expected to produce a
+stable point-estimate of "the" rejection rate, per the caveat above. The quote-discipline prompt
+problem is left open rather than iterated on again immediately &mdash; per ADR-010's sequencing,
+Move 2 (the benchmark) is where claim-level scoring buckets (supported / unsupported /
+unverifiable / wrong computation) get formalized, and that's the more useful place to fix worker
+prompting against a fixed, scored target instead of one more ungated iteration.
+</div>
+
+</div>
+</body>
+</html>

@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Groundswarm &mdash; Rejection Analysis: 55-worker swarm, all 29 real-claim rejections</title>
+<style>
+  :root{--bg:#0f1115;--fg:#e6e9ef;--dim:#98a2b3;--card:#171a21;--line:#252a34;
+        --good:#3fb950;--bad:#f85149;--warn:#d29922;--acc:#58a6ff}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--fg);
+       font:15px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+  .wrap{max-width:1080px;margin:0 auto;padding:28px 20px 80px}
+  h1{font-size:24px;margin:0 0 4px} h2{font-size:17px;margin:30px 0 8px;color:var(--acc)}
+  .dim{color:var(--dim)} .small{font-size:13px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:16px 18px;margin:14px 0}
+  table{border-collapse:collapse;width:100%;font-size:13.5px;margin:10px 0}
+  .scroll{overflow-x:auto}
+  th,td{border-bottom:1px solid var(--line);padding:8px 9px;text-align:left;vertical-align:top}
+  th{color:var(--dim);font-weight:600;font-size:12px;text-transform:uppercase;letter-spacing:.03em}
+  code{background:#0b0d11;padding:1px 5px;border-radius:4px;font-size:13px}
+  a{color:var(--acc)}
+  .back{font-size:13px;margin-bottom:18px;display:inline-block}
+  .lead{font-size:15.5px;border-left:3px solid var(--acc);padding-left:14px;margin:16px 0}
+  .tag{display:inline-block;padding:2px 8px;border-radius:99px;font-size:11.5px;font-weight:700}
+  .t-done{background:#123018;color:var(--good)} .t-fail{background:#3a1418;color:var(--bad)}
+  .t-warn{background:#33280a;color:var(--warn)}
+  .num{text-align:right;font-variant-numeric:tabular-nums}
+  .stat{display:inline-block;min-width:160px;margin:6px 22px 6px 0}
+  .stat b{display:block;font-size:20px} .stat span{color:var(--dim);font-size:12px}
+  .quote{font-family:ui-monospace,Consolas,monospace;font-size:12.5px;background:#0b0d11;
+         padding:6px 8px;border-radius:6px;display:block;margin-top:4px;color:#c9d1d9}
+  .strike{color:var(--bad)}
+  .good{color:var(--good)}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<a class="back" href="../index.html">&larr; Groundswarm hub</a>
+<h1>Rejection Analysis &mdash; every real-claim rejection in the 55-worker swarm run</h1>
+<div class="dim">Source: <code>scenarios/incident_monitoring_swarm/verification_log.json</code> (234 entries), the second 55-worker run. Every one of the 29 real-claim rejections below was read individually and checked against the source postmortem file &mdash; none of this is inferred from the aggregate count.</div>
+
+<div class="card small"><b class="good">&#10003; Fixed and re-validated</b> &mdash; see <a href="move1-revalidation.html">Move 1 re-validation</a>: the unicode-normalization gap and the arithmetic-recomputation check both landed and were confirmed against two live 55-worker re-runs (a real crash found and fixed along the way). The quote-paraphrasing problem below, however, is <b>still present</b> in the re-run &mdash; the anti-echo prompt fix did not collapse it, and a related new failure mode (the model misusing the new <code>computation</code> field) appeared alongside it. This page's numbers below are the original pre-fix run; see the Move 1 page for the current, post-fix breakdown.</div>
+
+<div class="lead">
+"~12.7% rejection rate" (29 of 229 real claims) is the number the raw log gives you. It is <b>not</b>
+the number that answers "how often is the swarm wrong." The deterministic verifier rejects a claim the
+instant its <code>quote</code> field fails an exact byte-for-byte substring match against the source
+&mdash; and 27 of these 29 rejections are the model's <code>quote</code> field being malformed
+(ellipsis, splicing, or literally echoing the prompt's placeholder text) while the underlying
+<code>text</code> claim is true. Only 2 of 29 are genuine content problems.
+</div>
+
+<h2>Headline breakdown</h2>
+<div class="card">
+<div class="stat"><b>229</b><span>real (non-injected) claims verified</span></div>
+<div class="stat"><b>200</b><span>confirmed</span></div>
+<div class="stat"><b>29</b><span>rejected (raw rate 12.7%)</span></div>
+<div class="stat"><b class="warn">27</b><span>of the 29 &mdash; quote-formatting artifact, claim was true</span></div>
+<div class="stat"><b class="strike">2</b><span>of the 29 &mdash; genuine content error</span></div>
+<div class="stat"><b>5 / 5</b><span>injected fabrications caught (100%)</span></div>
+</div>
+
+<div class="lead">
+Reading it the other way: the swarm's real, content-level error rate on this run was
+<b>2 claims out of 229 &asymp; 0.9%</b>, not 12.7%. The other 11.8 percentage points are the
+fail-closed verifier doing exactly what it's designed to do &mdash; refusing to confirm anything it
+can't byte-match &mdash; applied against a worker that doesn't reliably produce a clean verbatim
+quote. That's a real defect (it throws away true claims and burns judge-fallback calls), but it's a
+<b>worker prompt/parsing defect</b>, not a <b>verifier</b> or <b>factual-accuracy</b> defect.
+</div>
+
+<h2>Failure-mode breakdown (all 29)</h2>
+<div class="scroll"><table><thead>
+<tr><th>Mode</th><th>Count</th><th>Share</th><th>Claim was actually true?</th><th>Root cause</th></tr>
+</thead><tbody>
+<tr><td>Ellipsis truncation</td><td class="num">12</td><td class="num">41%</td><td><span class="tag t-done">yes</span></td><td>Model quoted a real span but added a leading/trailing <code>...</code>, breaking the exact-match check</td></tr>
+<tr><td>Placeholder echo</td><td class="num">10</td><td class="num">34%</td><td><span class="tag t-done">yes</span></td><td>Model copied the JSON schema's field description (<code>"a verbatim quote from the source supporting this claim, or null if none applies"</code>) into the <code>quote</code> field itself, instead of a real quote or <code>null</code></td></tr>
+<tr><td>Sentence splice</td><td class="num">4</td><td class="num">14%</td><td><span class="tag t-done">yes</span></td><td>Model stitched two non-adjacent source sentences into one alleged contiguous quote</td></tr>
+<tr><td>Typographic mismatch</td><td class="num">1</td><td class="num">3%</td><td><span class="tag t-done">yes</span></td><td>Model wrote a curly apostrophe (<code>&#8217;</code>, U+2019) where the source has a straight one (<code>'</code>, U+0027) &mdash; confirmed byte-for-byte against the source file</td></tr>
+<tr><td>Numeric/arithmetic error</td><td class="num">1</td><td class="num">3%</td><td><span class="tag t-fail">no</span></td><td>Claim asserted a 17-minute duration; source timestamps (throttle 12:11 UTC &rarr; drain complete 12:52 UTC) put it at 41 minutes</td></tr>
+<tr><td>Hallucinated detail, caught by judge</td><td class="num">1</td><td class="num">3%</td><td><span class="tag t-fail">no</span></td><td>Claim said the batch job was "killing alerts" at 20:14 UTC; source says the batch job itself was killed (terminated) at 20:14 &mdash; judge correctly flagged this as unsupported</td></tr>
+</tbody></table></div>
+
+<h2>Worked examples &mdash; quote-formatting artifacts (claim was true)</h2>
+<div class="card">
+<b>Ellipsis truncation</b> &mdash; <code>solace_queue_r4</code>, 8 of this run's 12 ellipsis cases came from a single worker call:
+<div class="quote">text: "Consumer lag grew to 340,000 unacknowledged messages at peak."
+quote: "Consumer lag grew to approximately 340,000 unacknowledged messages at peak<b class="strike">...</b>"
+source (verbatim): "Consumer lag grew to approximately 340,000 unacknowledged messages at peak, delaying order-event delivery..."</div>
+The quoted span is real and correctly located &mdash; the model just appended <code>...</code> where the sentence continues, and the deterministic check requires the <code>quote</code> string to appear verbatim, so the trailing ellipsis makes it a non-match.
+
+<br><br><b>Placeholder echo</b> &mdash; every <code>ridgeline_auth</code> rejection except one (6 of 11 repeats) shows this exact pattern:
+<div class="quote">text: "The misconfigured batch job caused database connection pool exhaustion."
+quote: "<b class="strike">a verbatim quote from the source supporting this claim, or null if none applies</b>"</div>
+That string is not from the source &mdash; it's copied verbatim from the worker's own extraction-prompt schema description. The model filled the <code>quote</code> field with the instructions for the field instead of following them. <code>ridgeline_auth</code> alone accounts for 6 of the 10 placeholder-echo cases; <code>cobalt_storage_r6</code> has the 7th.
+
+<br><br><b>Sentence splice</b> &mdash; <code>meridian_cache_r6</code>:
+<div class="quote">text: "The backlog was caused by a message-broker partition rebalance that paused invalidation delivery for 11 minutes."
+quote: "Starting at 03:14 UTC on 2026-05-11, Meridian Cache's edge nodes in the ap-south-1 region began serving stale content due to a cache-invalidation message backlog. The backlog was caused by a message-broker partition rebalance that paused invalidation delivery for 11 minutes."</div>
+The second sentence is a real, correct quote on its own; the model prepended an unrelated earlier sentence to it, so the combined string never appears contiguously in the source.
+
+<br><br><b>Typographic mismatch</b> &mdash; <code>solace_queue_r11</code>, confirmed by reading the raw source bytes:
+<div class="quote">text: "The queue's retention window was never approached."
+quote (model, U+2019): "the queue&#8217;s retention window of 72 hours was never approached."
+source (actual, U+0027): "the queue's retention window of 72 hours was never approached."</div>
+Content is 100% correct; the model "smart-quoted" the apostrophe and the exact-match check has no tolerance for it.
+</div>
+
+<h2>Worked examples &mdash; genuine content errors (2 of 29)</h2>
+<div class="card">
+<b>Numeric/arithmetic error</b> &mdash; <code>solace_queue_r11</code>:
+<div class="quote">text: "The backlog drain completed within 17 minutes after throttling the partner integration."
+source: "...throttled the specific partner's webhook concurrency at 12:11 UTC, which stabilized lag within 8 minutes. Full backlog drain completed at 12:52 UTC."</div>
+12:52 &minus; 12:11 = 41 minutes, not 17. The model appears to have reported the 8-minute lag-stabilization figure mislabeled as the drain time, or simply miscalculated. This is a real extraction error the verifier was right to reject &mdash; it just happened to also fail on a quote-format technicality (no quote round-trip), so <code>method: deterministic</code> caught it before <code>llm_judge</code> ever needed to reason about the number.
+
+<br><br><b>Hallucinated detail, caught by <code>llm_judge</code></b> &mdash; <code>ridgeline_auth_r5</code> (this one had no quote, so it went through the LLM-judge path, which worked correctly):
+<div class="quote">text: "The batch job was killing alerts at 20:14 UTC and took about 10 minutes to recover."
+judge reason: "The claim is not supported by the source text because it incorrectly states that the batch job was 'killing alerts' at 20:14 UTC."</div>
+Source says the batch job itself was identified and killed (terminated) via connection-pool alerts at 20:14 UTC. The model inverted subject and object of "kill." This is the one case in the whole 234-claim run where the LLM-judge fallback caught something the deterministic path structurally could not (no quote existed to check).
+</div>
+
+<h2>What this changes about "accuracy kitni hai"</h2>
+<div class="card">
+Two different numbers answer two different questions:<br><br>
+<b>"How often does the verifier confirm a claim?"</b> &mdash; 200/229 = 87.3%. This is what you'd see in a dashboard and it's the number that determines judge-fallback call volume and Memory write-through rate.<br><br>
+<b>"How often is the underlying extracted fact actually wrong?"</b> &mdash; 2/229 &asymp; 0.9%. This is what "accuracy" means to a human reading the postmortems, and it's the number that should drive any claim about the swarm being trustworthy or not.<br><br>
+The gap between those two numbers (&asymp;11.8 points) is entirely attributable to one fixable thing: the extraction worker's prompt does not reliably teach the model to (a) never echo the schema description, (b) never truncate a quote with an ellipsis, and (c) never splice two spans together. Fixing that prompt should collapse the raw rejection rate toward the true ~1% content-error rate without weakening the verifier at all &mdash; the fail-closed design itself is working exactly as intended (0 fabrications slipped through, 5/5 caught).
+</div>
+
+<h2>Also worth noting</h2>
+<div class="card small">
+All 5 injected fabrications were rejected, split 3 <code>deterministic</code> / 2 <code>llm_judge</code> as designed (fabrications with a fake quote hit the deterministic path; fabrications with no quote fell through to the judge). None of the 5 fabrications appear in the 29-rejection breakdown above &mdash; this page covers only the 29 rejections among the 229 <i>real</i>, non-injected claims.
+</div>
+
+</div>
+</body>
+</html>

@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Groundswarm &mdash; deterministic old-vs-new worker-prompt A/B</title>
+<style>
+  :root{--bg:#0f1115;--fg:#e6e9ef;--dim:#98a2b3;--card:#171a21;--line:#252a34;
+        --good:#3fb950;--bad:#f85149;--warn:#d29922;--acc:#58a6ff}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--fg);
+       font:15px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+  .wrap{max-width:1080px;margin:0 auto;padding:28px 20px 80px}
+  h1{font-size:24px;margin:0 0 4px} h2{font-size:17px;margin:30px 0 8px;color:var(--acc)}
+  .dim{color:var(--dim)} .small{font-size:13px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:16px 18px;margin:14px 0}
+  table{border-collapse:collapse;width:100%;font-size:13.5px;margin:10px 0}
+  .scroll{overflow-x:auto}
+  th,td{border-bottom:1px solid var(--line);padding:8px 9px;text-align:left;vertical-align:top}
+  th{color:var(--dim);font-weight:600;font-size:12px;text-transform:uppercase;letter-spacing:.03em}
+  code{background:#0b0d11;padding:1px 5px;border-radius:4px;font-size:13px}
+  a{color:var(--acc)}
+  .back{font-size:13px;margin-bottom:18px;display:inline-block}
+  .lead{font-size:15.5px;border-left:3px solid var(--acc);padding-left:14px;margin:16px 0}
+  .tag{display:inline-block;padding:2px 8px;border-radius:99px;font-size:11.5px;font-weight:700}
+  .t-done{background:#123018;color:var(--good)} .t-fail{background:#3a1418;color:var(--bad)}
+  .t-warn{background:#33280a;color:var(--warn)}
+  .num{text-align:right;font-variant-numeric:tabular-nums}
+  .stat{display:inline-block;min-width:170px;margin:6px 22px 6px 0}
+  .stat b{display:block;font-size:20px} .stat span{color:var(--dim);font-size:12px}
+  .quote{font-family:ui-monospace,Consolas,monospace;font-size:12.5px;background:#0b0d11;
+         padding:6px 8px;border-radius:6px;display:block;margin-top:4px;color:#c9d1d9;white-space:pre-wrap}
+  .good{color:var(--good)} .bad{color:var(--bad)} .warn{color:var(--warn)}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<a class="back" href="../index.html">&larr; Groundswarm hub</a>
+<h1>Deterministic old-vs-new worker-prompt A/B</h1>
+<div class="dim">Question B from the Move-1 re-validation follow-up: did the ADR-009 worker-prompt change actually change extraction behavior, independent of dolphin3's sampling noise? Ten calls, <code>temperature=0</code>, one call per (source, prompt version) &mdash; run against a GPU-backed Ollama instance hosted on Google Colab (see <a href="#infra">infra note</a> below).</div>
+
+<div class="lead">
+The headline finding is a clean, positive, directly reproduced result: the single largest failure
+mode ADR-009 was built to fix &mdash; the worker <b class="bad">echoing the schema's own
+placeholder text</b> into the <code>quote</code> field instead of a real source quote &mdash;
+reproduces <b>deterministically</b> under the old prompt on 2 of 5 sources, and is <b
+class="good">completely absent</b> from all 10 new-prompt claims across all 5 sources. That is a
+much stronger validation than the noisy 55-worker re-run could give, because it is a paired,
+controlled comparison: same source, same temperature, only the prompt text differs. Two real
+costs came with it: a genuine recall regression on some sources (the new prompt drops claims the
+old prompt caught), and one concrete instance of the <code>computation</code> field producing
+internally-inconsistent arithmetic that would cause the verifier to <b class="warn">falsely reject
+a true claim</b>.
+</div>
+
+<h2>Method</h2>
+<div class="card small">
+Reconstructed the exact old system prompt from <code>git show HEAD:src/groundswarm/workers/sim_worker.py</code>
+(pre-ADR-009) and paired it against the current working-tree prompt. For each of the 5 fixture
+postmortems, called <code>OllamaClient.generate(..., temperature=0.0)</code> once with each prompt
+version &mdash; 10 calls total, script at <code>scratchpad</code>, results archived alongside this
+run. At <code>temperature=0</code> a call is a pure function of (prompt, source), so a repeat-count
+sweep would be redundant; one call per cell is already the full signal.
+</div>
+
+<h2>Claim counts, same source, same temperature &mdash; old &rarr; new</h2>
+<div class="scroll"><table><thead>
+<tr><th>Source</th><th class="num">Old claims</th><th class="num">New claims</th><th>Old quote quality</th></tr>
+</thead><tbody>
+<tr><td>meridian_cache</td><td class="num">1</td><td class="num">4</td><td class="bad">schema-echo placeholder</td></tr>
+<tr><td>anchor_cdn</td><td class="num">5</td><td class="num">2</td><td class="good">5/5 real quotes</td></tr>
+<tr><td>solace_queue</td><td class="num">8</td><td class="num">3</td><td class="good">8/8 real quotes</td></tr>
+<tr><td>ridgeline_auth</td><td class="num">1</td><td class="num">3</td><td class="bad">schema-echo placeholder</td></tr>
+<tr><td>cobalt_storage</td><td class="num">4</td><td class="num">3</td><td class="good">4/4 real quotes</td></tr>
+</tbody></table></div>
+<div class="small dim">New-prompt quote coverage was 100% (every claim quoted) on all 5 sources; the
+<code>computation</code> field was used once across the 10 new-prompt calls (anchor_cdn). Full
+per-source claim text and raw model output archived alongside this page's source data.</div>
+
+<h2>1. The exact bug ADR-009 targeted, reproduced and fixed &mdash; deterministically</h2>
+<div class="card">
+On <code>meridian_cache</code> and <code>ridgeline_auth</code>, the old prompt's entire output for
+that call was <b>one claim</b> whose <code>quote</code> field is, character for character, the
+schema's own field-description text:
+<div class="quote">"quote": "a verbatim quote from the source supporting this claim, or null if none applies"</div>
+That is not a real quote from either postmortem &mdash; it is dolphin3 copying the instruction text
+itself, the exact failure mode the original 55-worker rejection analysis found in 10 of 29
+rejections and that ADR-009's anti-echo instruction exists to stop. Under the new prompt, on the
+<i>same two sources at the same temperature</i>, none of the 7 resulting claims show this pattern
+&mdash; every quote is a real span that reads as copied from the source text. This is the cleanest
+possible evidence that the specific fix works: same input, same sampling, only the prompt wording
+changed, and the literal bug goes from 2/5 sources to 0/5.
+</div>
+
+<h2>2. The cost: a real recall regression, not just re-granularization</h2>
+<div class="card">
+On the 3 sources where the old prompt was already producing real quotes (anchor_cdn, solace_queue,
+cobalt_storage), the new prompt did not simply re-word the same facts &mdash; it <b>dropped some of
+them outright</b>. Concretely:
+<ul>
+<li><b>anchor_cdn</b>: the new prompt's 2 claims cover the API-token root cause and a duration; it
+drops the on-call paging/rollout timeline, the "100% of that hostname's traffic, other hostnames
+unaffected" scope claim, and the remediation plan (14-day alert, workload-identity flow) &mdash;
+all of which the old prompt captured with real quotes.</li>
+<li><b>solace_queue</b>: new drops the incident start time, the named root cause (slow downstream
+webhook receiver), and the "72-hour retention window never approached" claim.</li>
+<li><b>cobalt_storage</b>: new drops the root-cause claim (single storage node, failing disk)
+entirely, keeping only the impact/detection/remediation claims.</li>
+</ul>
+Where the new prompt's claim count also just dropped for a genuinely mechanical reason &mdash; e.g.
+solace_queue's lag and delay figures merged into one claim because the source itself contains them
+as a single sentence, and the new prompt's quote for that merged claim is a verbatim copy of that
+sentence, not a paraphrase &mdash; that's a legitimate consolidation, not a loss. But the three
+drops above are real content that no new claim, merged or otherwise, recovers. Net: the anti-echo
+fix is real and worked, but it did not come free &mdash; this is exactly the "false-rejection /
+coverage cost" ADR-012's Move-2 benchmark is scoped to measure formally, not something to iterate on
+ad hoc here.
+</div>
+
+<h2>3. New failure mode found: internally-inconsistent computation, on a claim that's true</h2>
+<div class="card">
+The <code>computation</code> field was used exactly once across 10 new-prompt calls, on
+anchor_cdn's <code>"The outage lasted for 34 minutes."</code> claim:
+<div class="quote">operands: [{"value": "06:00 UTC on 2026-06-22", ...}, {"value": "06:19 UTC", ...}]
+operation: duration_minutes, claimed result: 34</div>
+Recomputing this exact operand pair with the verifier's own <code>apply_operation()</code> gives
+<b>19</b>, not 34 &mdash; a straight mismatch that <code>Verifier._check_computation</code> would
+reject. But the underlying claim is almost certainly <b class="good">true</b>: the source states
+"for 34 minutes" directly, and separately that rollout completed by 06:34 UTC (06:00&rarr;06:34 is
+also 34 minutes) &mdash; the postmortem's own prompt instructions even say <i>"If the claim's
+number appears directly in the source, leave computation null and use quote instead,"</i> which
+this call violates by inventing a computation it didn't need. The worker picked the wrong second
+operand (06:19, the paging time, not 06:34, the rollout-complete time) but wrote the correct final
+number anyway, apparently copied from elsewhere in the source rather than actually derived from its
+own stated operands. Net effect: a <b class="warn">true claim that the arithmetic check would
+falsely reject</b>, caught here only because the deterministic A/B made the operand math checkable
+in isolation &mdash; in the noisy 55-worker run this would show up as one more computation
+rejection indistinguishable from the others already catalogued in
+<a href="move1-revalidation.html">Move 1 re-validation</a>. Single instance so far; not enough to
+size the false-rejection rate on its own, but exactly the kind of case Move 2's benchmark needs a
+scored bucket for.
+</div>
+
+<h2 id="infra">Infra note: Colab-hosted Ollama</h2>
+<div class="card small">
+Run against dolphin3 hosted on a free-tier Colab T4 GPU (not the local laptop), reached over a
+<code>cloudflared</code> quick tunnel via <code>OLLAMA_HOST</code> &mdash; see
+<code>groundswarm/colab/ollama_colab_host.ipynb</code>. Two infra issues hit and fixed along the
+way: Ollama's installer needs <code>zstd</code>, not preinstalled on the Colab image; and Ollama's
+own anti-DNS-rebinding Host-header check returns a bare <code>403</code> to any request through a
+tunnel unless the server is started with <code>OLLAMA_ORIGINS=*</code>. Separately, the free-tier
+GPU runtime was reclaimed mid-session (unsaved notebook, all state including the tunnel lost) after
+roughly the first 10&ndash;15 minutes of use, confirming the quota-reclaim risk this notebook's own
+setup instructions already warned about &mdash; worth budgeting for on any future run against this
+same infra.
+</div>
+
+</div>
+</body>
+</html>

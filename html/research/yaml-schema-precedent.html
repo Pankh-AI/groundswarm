@@ -1,0 +1,283 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Groundswarm — YAML Schema Design Precedent</title>
+<style>
+  :root{--bg:#0f1115;--fg:#e6e9ef;--dim:#98a2b3;--card:#171a21;--line:#252a34;
+        --good:#3fb950;--bad:#f85149;--warn:#d29922;--acc:#58a6ff}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--fg);
+       font:15px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+  .wrap{max-width:1080px;margin:0 auto;padding:28px 20px 80px}
+  h1{font-size:24px;margin:0 0 4px} h2{font-size:18px;margin:32px 0 10px;color:var(--acc)}
+  h3{font-size:14.5px;margin:18px 0 6px;color:var(--fg)}
+  .dim{color:var(--dim)} .small{font-size:13px}
+  .lead{font-size:15.5px;border-left:3px solid var(--acc);padding-left:14px;margin:16px 0}
+  code{background:#0b0d11;padding:1px 5px;border-radius:4px;font-size:13px}
+  pre{background:#0b0d11;border:1px solid var(--line);border-radius:8px;padding:12px 14px;
+      overflow-x:auto;font-size:12.5px;line-height:1.5;color:#c9d1d9}
+  a{color:var(--acc)}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:16px 18px;margin:14px 0}
+  .opinion{border-left:3px solid var(--warn)}
+  .src{font-size:13px;color:var(--dim)}
+  .back{font-size:13px;margin-bottom:18px;display:inline-block}
+  ol,ul{margin:8px 0;padding-left:22px}
+  li{margin:6px 0}
+  table{border-collapse:collapse;width:100%;font-size:13.5px;margin:10px 0}
+  .scroll{overflow-x:auto}
+  th,td{border-bottom:1px solid var(--line);padding:8px 9px;text-align:left;vertical-align:top}
+  th{color:var(--dim);font-weight:600;font-size:12px;text-transform:uppercase;letter-spacing:.03em}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<a class="back" href="../index.html">&larr; Groundswarm hub</a>
+<h1>YAML Schema Design Precedent</h1>
+<div class="dim">Product-pivot research, thread 2 of 2 &middot; compiled 2026-08-15 &middot; background research agent, model sonnet, 5 parallel research passes</div>
+
+<div class="lead">
+Five schemas actually read from source (not recalled from training): docker-compose, GitHub Actions'
+<code>permissions:</code> block (the closest known analog to Groundswarm's verification-rule design
+problem), dbt's sources/tests, Kubernetes CRD/NetworkPolicy/OPA Gatekeeper, and six agent-orchestration
+export formats. This page reports what was found, with real quoted excerpts. The actual schema decision
+for Groundswarm's own YAML &mdash; not delegated to this research pass on purpose &mdash; is on the
+<a href="../product/swarm-schema.html">swarm-schema page</a>.
+</div>
+
+<h2>1. docker-compose.yml</h2>
+<div class="card">
+Top-level keys: <code>version</code> (legacy), <code>name</code>, <code>services</code> (required),
+<code>networks</code>, <code>volumes</code>, <code>configs</code>, <code>secrets</code>, <code>include</code>.
+<h3>Versioning: deprecated in favor of a rolling flat spec</h3>
+Docker's own docs: <i>"The top-level <code>version</code> property is defined by the Compose
+Specification for backward compatibility. It is only informative... Compose doesn't use
+<code>version</code> to select an exact schema to validate the Compose file, but prefers the most recent
+schema when it's implemented."</i> The modern answer is <b>no version discriminator at all</b> &mdash; one
+continuously-extended schema, validated by "do I recognize every field," not by branching on a version
+number.
+<h3>Cross-referencing between services</h3>
+<pre>services:
+  web:
+    build: .
+    depends_on:
+      db:
+        condition: service_healthy
+        restart: true
+      redis:
+        condition: service_started</pre>
+Plus implicit DNS: <i>"when no specific network configuration is set, any service is able to reach any
+other service at that service's name on the default network."</i> Interpolation
+(<code>${VAR}</code>, <code>${VAR:-default}</code>) and <code>extends:</code> round out the toolkit.
+<h3>Extensibility escape hatch</h3>
+The <code>x-</code> convention: <i>"Compose ignores any fields that start with x-, this is the sole
+exception where Compose silently ignores unrecognized fields."</i> Combined with YAML anchors, this lets
+tooling carry custom data through the file without touching core schema validation.
+</div>
+
+<h2>2. GitHub Actions &mdash; the <code>permissions:</code> block</h2>
+<div class="card">
+Top-level keys: <code>name</code>, <code>run-name</code>, <code>on</code>, <code>permissions</code>,
+<code>env</code>, <code>defaults</code>, <code>concurrency</code>, <code>jobs</code>.
+<h3>Step-output vs. job-output are two distinct mechanisms</h3>
+<pre>jobs:
+  job1:
+    outputs:
+      output1: ${{ steps.step1.outputs.test }}
+    steps:
+      - id: step1
+        run: echo "test=hello" >> "$GITHUB_OUTPUT"
+  job2:
+    needs: job1
+    steps:
+      - env:
+          OUTPUT1: ${{needs.job1.outputs.output1}}
+        run: echo "$OUTPUT1"</pre>
+<code>steps.&lt;id&gt;.outputs.&lt;name&gt;</code> is intra-job; <code>needs.&lt;job_id&gt;.outputs.&lt;name&gt;</code>
+is inter-job, gated by an explicit <code>needs:</code> dependency edge.
+<h3>The permissions block, in full</h3>
+Scopes: <code>contents</code>, <code>issues</code>, <code>pull-requests</code>, <code>actions</code>,
+<code>checks</code>, <code>deployments</code>, <code>discussions</code>, <code>id-token</code>,
+<code>packages</code>, <code>pages</code>, <code>security-events</code>, <code>statuses</code>,
+<code>vulnerability-alerts</code>. Values are <code>read</code>/<code>write</code>/<code>none</code>
+(write includes read). <b>All-or-nothing default-fill rule</b>: <i>"If you specify the access for any of
+these permissions, all of those that are not specified are set to none."</i> Listing one scope silences
+every other scope to <code>none</code> &mdash; not additive, not merge-with-defaults. Shorthands:
+<code>read-all</code>, <code>write-all</code>, <code>{}</code> (everything none). Settable workflow-wide
+or per-job; job-level <b>replaces</b> rather than merges with the workflow-level default.
+<pre>permissions:
+  contents: read
+  issues: write
+  pull-requests: write</pre>
+<h3>No version field &mdash; versioning lives at the reference, not the document</h3>
+No <code>version:</code>/<code>apiVersion:</code> anywhere in workflow YAML. Instead:
+<code>uses: actions/checkout@v4</code> (tag/branch/SHA). GitHub's own guidance: <i>"Pinning an action to a
+full-length commit SHA is currently the only way to use an action as an immutable release"</i> &mdash; tags
+are movable/deletable by a compromised upstream, hence the SHA-pinning recommendation for
+security-sensitive references.
+</div>
+
+<h2>3. dbt &mdash; sources + attached tests</h2>
+<div class="card">
+<h3>Sources, with freshness as first-class config</h3>
+<pre>sources:
+  - name: jaffle_shop
+    config:
+      freshness:
+        warn_after: {count: 12, period: hour}
+        error_after: {count: 24, period: hour}
+      loaded_at_field: _etl_loaded_at
+    tables:
+      - name: orders
+        columns:
+          - name: id
+            data_tests: [unique, not_null]</pre>
+<h3>Models reference sources through function calls that build the DAG as a side effect</h3>
+<code>select * from {{ source('jaffle_shop', 'orders') }}</code> &mdash; <i>"ref() is... interpolating the
+schema... and using these references between models to automatically build the dependency graph."</i> No
+separate DAG file.
+<h3>Tests attached to a model/column &mdash; the actual verification-rule precedent</h3>
+<pre>models:
+  - name: orders
+    columns:
+      - name: status
+        data_tests:
+          - accepted_values: {arguments: {values: ['placed','shipped','completed','returned']}}
+      - name: customer_id
+        data_tests:
+          - relationships: {arguments: {to: ref('customers'), field: id}}</pre>
+A three-tier ladder directly relevant to Groundswarm's quote-match/judge/arithmetic-recompute split:
+<ol>
+<li><b>Built-in generic tests</b> (fixed, zero-config policy): <code>unique</code>, <code>not_null</code>,
+<code>accepted_values</code>, <code>relationships</code>.</li>
+<li><b>Custom generic tests</b> (reusable, parameterized, defined once as a macro, referenced by name
+everywhere after).</li>
+<li><b>Singular tests</b> (freeform escape hatch, raw SQL file, no reuse) &mdash; docs: <i>"Singular data
+tests are so easy that you may find yourself writing the same basic structure repeatedly... we recommend
+generic data tests"</i> at that point.</li>
+</ol>
+<h3>Versioning has three separate, non-overlapping meanings</h3>
+<code>dbt_project.yml</code>'s <code>version:</code> is project semver, <i>"isn't currently used
+meaningfully by dbt."</i> <code>require-dbt-version: [">=1.10.0", "&lt;3.0.0"]</code> is a CLI-compatibility
+range gate. Individual resource files carry <code>version: 2</code> &mdash; the genuine schema-version
+discriminator: <i>"Adding version: 2 allowed us to make this structure more extensible... will make it
+easier for us to introduce new structures in the future."</i>
+</div>
+
+<h2>4. Kubernetes &mdash; CRDs, NetworkPolicy, OPA Gatekeeper</h2>
+<div class="card">
+Universal shape: <code>apiVersion</code> / <code>kind</code> / <code>metadata</code> / <code>spec</code>
+(desired state, user-authored) / <code>status</code> (observed state, system-written, never user-authored).
+<h3>NetworkPolicy &mdash; target selector + directional rules</h3>
+<pre>spec:
+  podSelector: {matchLabels: {role: db}}
+  policyTypes: [Ingress, Egress]
+  ingress:
+    - from: [{podSelector: {matchLabels: {role: frontend}}}]
+      ports: [{protocol: TCP, port: 6379}]</pre>
+<h3>OPA Gatekeeper's ConstraintTemplate + Constraint split &mdash; the strongest single precedent found
+across all five areas for a policy/constraint block</h3>
+<i>Template</i> (defines a reusable rule type + parameter schema + evaluation logic once, and registers a
+new kind as a side effect):
+<pre>apiVersion: templates.gatekeeper.sh/v1
+kind: ConstraintTemplate
+spec:
+  crd:
+    spec:
+      names: {kind: K8sRequiredLabels}
+      validation:
+        openAPIV3Schema: {type: object, properties: {labels: {type: array, items: {type: string}}}}
+  targets:
+    - target: admission.k8s.gatekeeper.sh
+      rego: |
+        package k8srequiredlabels
+        violation[{"msg": msg}] { ... }</pre>
+<i>Instance</i> (a user applies the newly-registered kind, scoping + parameterizing without touching logic):
+<pre>apiVersion: constraints.gatekeeper.sh/v1beta1
+kind: K8sRequiredLabels
+spec:
+  match:
+    kinds: [{apiGroups: [""], kinds: ["Namespace"]}]
+  parameters:
+    labels: ["gatekeeper"]</pre>
+Docs: <i>"Before you can define a constraint, you must first define a ConstraintTemplate, which describes
+both the Rego that enforces the constraint and the schema of the constraint... much like arguments to a
+function."</i> <code>match</code> scopes by kinds/namespaces/labelSelector; <code>parameters</code> carries
+the tunable values.
+</div>
+
+<h2>5. Agent-orchestration export/config formats</h2>
+<div class="scroll"><table><thead>
+<tr><th>Framework</th><th>Verdict</th><th>Notes</th></tr>
+</thead><tbody>
+<tr><td><b>Dify</b></td><td>Genuine, versioned YAML DSL</td>
+<td><code>kind: app</code>, <code>version: 0.6.0</code>, <code>workflow.graph.{nodes,edges}</code>; edges
+carry source/target node IDs; node-to-node reference via <code>value_selector: [node_id, var_name]</code>
+and <code>{{#node_id.var#}}</code> interpolation.</td></tr>
+<tr><td><b>Flowise</b></td><td>Genuine JSON, no flow-level version</td>
+<td><code>flowData</code> = <code>{nodes, edges, viewport}</code>; edges use typed
+<code>sourceHandle</code>/<code>targetHandle</code>; only per-node <code>data.version</code> exists.</td></tr>
+<tr><td><b>n8n</b></td><td>Genuine JSON, real versioning</td>
+<td>Top keys <code>name, nodes, connections, versionId</code> &mdash; <code>versionId</code> used for
+optimistic locking; connections keyed by node <b>name</b>; nodes carry per-type <code>typeVersion</code>.</td></tr>
+<tr><td><b>LangGraph</b></td><td>No declarative topology format</td>
+<td><code>langgraph.json</code> is deployment/CLI config only &mdash; graph structure is pure Python.</td></tr>
+<tr><td><b>CrewAI</b></td><td>Genuine YAML, name-referenced</td>
+<td>Closest "workers referenced by tasks" precedent: <code>agents.yaml</code> &rarr;
+<code>researcher: {role, goal, backstory}</code>; <code>tasks.yaml</code> &rarr;
+<code>research_task: {..., agent: researcher}</code> &mdash; task references agent by name.</td></tr>
+<tr><td><b>AutoGen Studio</b></td><td>Genuine JSON, framework in maintenance mode</td>
+<td>Recursive <code>{provider, component_type, version, label, config}</code> shape composing
+team/agent/model/tool nodes. Well-designed, but weigh against Microsoft's Oct 2025 maintenance-mode call.</td></tr>
+</tbody></table></div>
+
+<h2>Reading guide for the schema decision</h2>
+<div class="card opinion">
+<b>This is the researching agent's own read, reported as opinion, not fact &mdash; the actual schema
+decision is made separately, see <a href="../product/swarm-schema.html">swarm-schema.html</a>.</b>
+<ol>
+<li><b>Gatekeeper's ConstraintTemplate/Constraint split maps almost exactly onto Groundswarm's three
+verification-rule kinds.</b> A small, fixed number of rule types (quote-match, LLM-judge,
+arithmetic-recompute), each needing different parameters, applied against a variable target (which
+claims, from which worker, sourced from which document) &mdash; exactly the shape Gatekeeper was built
+for. Don't literally build a two-file template/instance system (overkill for v1), but keep the shape:
+each rule declares a <code>type:</code> from a small closed enum, a match-style target selector, and a
+parameters block validated against that type's own schema. Adding a fourth verification type later is
+then a new type entry, not a schema-wide rewrite.</li>
+<li><b>dbt's per-column <code>tests:</code> plus its built-in/custom/singular ladder is the more
+practically-grounded version of the same idea.</b> Groundswarm's verification rules aren't cluster-wide
+admission policy, they're per-claim assertions on structured output a worker produces from a declared
+source &mdash; dbt's exact use case, not Kubernetes'. Attach rules under the worker/claim they govern
+rather than one global top-level block (closer to GitHub's <code>permissions:</code> shape, and the wrong
+fit here &mdash; permissions are ambient defaults, verification rules are per-claim).</li>
+<li><b>Compose's reference-by-name + implicit topology, not GitHub's <code>needs:</code>/outputs graph, is
+the right mental model for workers&rarr;sources.</b> A worker references a source by name, resolved into
+an implicit dependency graph &mdash; there's no sequencing question here (a worker doesn't produce a value
+another worker's config depends on at parse time). Compose's
+<code>depends_on: {condition: service_healthy}</code> is worth stealing if a worker ever needs to wait on
+a source-freshness check; dbt's <code>freshness: warn_after/error_after</code> is the source-side half of
+the same idea.</li>
+</ol>
+<b>The near-miss to flag rather than resolve:</b> CrewAI's <code>agents.yaml</code>/<code>tasks.yaml</code>
+name-reference pattern looks like the most on-the-nose precedent, and is genuinely good precedent for the
+worker-declaration shape (role/goal/backstory-style fields) &mdash; but its task&rarr;agent reference is
+1:1 and workflow-order is still resolved by decorator/code wiring on the Python side, not by anything in
+the YAML itself. Not precedent for how verification rules should reference claims, or how multiple
+workers wire into a swarm topology.
+<br><br>
+<b>Left genuinely open, not answered by any of the five precedents:</b> GitHub's
+all-or-nothing-with-least-privilege-default (specify one scope, everything else drops to none) is a
+distinctive design choice worth deciding on deliberately for verification rules &mdash; do unlisted claims
+get verified with a safe default, or silently pass? That default-when-absent question is a first-party
+Groundswarm decision, addressed on the schema page.
+</div>
+
+<div class="src">Source: background research agent (model sonnet), 5 parallel research passes against
+official docs/source repos, 6 tool calls, ~553s duration, ~77.5k tokens. Every excerpt above is quoted
+directly from official documentation or source, not paraphrased from training-data recall.</div>
+
+</div>
+</body>
+</html>

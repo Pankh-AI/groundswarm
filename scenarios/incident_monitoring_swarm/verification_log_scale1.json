@@ -1,0 +1,101 @@
+[
+  {
+    "worker_id": "meridian_cache_r1",
+    "source": "meridian_cache_postmortem.txt",
+    "text": "The incident lasted 27 minutes (from 03:14 to 03:41 UTC).",
+    "quote": "Full cache freshness was restored by 03:41 UTC, a total incident duration of 27 minutes.",
+    "computation": null,
+    "verdict": "confirmed",
+    "method": "deterministic",
+    "reason": "quote round-trips into the live-refetched source",
+    "is_injected_fabrication": false
+  },
+  {
+    "worker_id": "meridian_cache_r1",
+    "source": "meridian_cache_postmortem.txt",
+    "text": "Approximately 22% of requests received stale content.",
+    "quote": "Approximately 22% of read requests during the incident window received content older than the configured 5-minute freshness window.",
+    "computation": null,
+    "verdict": "confirmed",
+    "method": "deterministic",
+    "reason": "quote round-trips into the live-refetched source",
+    "is_injected_fabrication": false
+  },
+  {
+    "worker_id": "meridian_cache_r1",
+    "source": "meridian_cache_postmortem.txt",
+    "text": "The incident was caused by a message-broker partition rebalance.",
+    "quote": "The backlog was caused by a message-broker partition rebalance that paused invalidation delivery for 11 minutes.",
+    "computation": null,
+    "verdict": "confirmed",
+    "method": "deterministic",
+    "reason": "quote round-trips into the live-refetched source",
+    "is_injected_fabrication": false
+  },
+  {
+    "worker_id": "meridian_cache_r1",
+    "source": "meridian_cache_postmortem.txt",
+    "text": "Increasing partition count from 6 to 12.",
+    "quote": "Meridian Cache is adding a dead-letter alert for invalidation-queue backlogs exceeding 2 minutes and increasing partition count from 6 to 12 to reduce rebalance blast radius.",
+    "computation": null,
+    "verdict": "confirmed",
+    "method": "deterministic",
+    "reason": "quote round-trips into the live-refetched source",
+    "is_injected_fabrication": false
+  },
+  {
+    "worker_id": "injected_by_script",
+    "source": "meridian_cache_postmortem.txt",
+    "text": "Meridian Cache's stale-content incident exposed customer payment data.",
+    "quote": "customer payment data was exposed during the stale-content incident",
+    "computation": null,
+    "verdict": "rejected",
+    "method": "deterministic",
+    "reason": "quote does not appear in the source text, invented or altered",
+    "is_injected_fabrication": true
+  },
+  {
+    "worker_id": "injected_by_script",
+    "source": "anchor_cdn_postmortem.txt",
+    "text": "Anchor CDN's certificate incident affected all customer hostnames, not just api.anchorcdn.net.",
+    "quote": null,
+    "computation": null,
+    "verdict": "rejected",
+    "method": "llm_judge",
+    "reason": "The source states only the API endpoint 'api.anchorcdn.net' was affected, while all other Anchor CDN hostnames were unaffected.",
+    "is_injected_fabrication": true
+  },
+  {
+    "worker_id": "injected_by_script",
+    "source": "solace_queue_postmortem.txt",
+    "text": "Solace Queue permanently lost 340,000 order-event messages during the backlog.",
+    "quote": "340,000 order-event messages were permanently lost",
+    "computation": null,
+    "verdict": "rejected",
+    "method": "deterministic",
+    "reason": "quote does not appear in the source text, invented or altered",
+    "is_injected_fabrication": true
+  },
+  {
+    "worker_id": "injected_by_script",
+    "source": "ridgeline_auth_postmortem.txt",
+    "text": "Ridgeline Auth's connection pool exhaustion caused a full site-wide outage lasting six hours.",
+    "quote": null,
+    "computation": null,
+    "verdict": "rejected",
+    "method": "llm_judge",
+    "reason": "The source states that the incident lasted 22 minutes, not six hours.",
+    "is_injected_fabrication": true
+  },
+  {
+    "worker_id": "injected_by_script",
+    "source": "cobalt_storage_postmortem.txt",
+    "text": "Cobalt Storage lost customer data because only one replica of each object existed.",
+    "quote": "only one replica of each object existed",
+    "computation": null,
+    "verdict": "rejected",
+    "method": "deterministic",
+    "reason": "quote does not appear in the source text, invented or altered",
+    "is_injected_fabrication": true
+  }
+]

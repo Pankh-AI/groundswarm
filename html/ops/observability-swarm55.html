@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Groundswarm &mdash; Observability: incident_monitoring_swarm55 (55 workers)</title>
+<style>
+  :root{--bg:#0f1115;--fg:#e6e9ef;--dim:#98a2b3;--card:#171a21;--line:#252a34;
+        --good:#3fb950;--bad:#f85149;--warn:#d29922;--acc:#58a6ff}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--fg);
+       font:15px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+  .wrap{max-width:980px;margin:0 auto;padding:28px 20px 80px}
+  h1{font-size:24px;margin:0 0 4px} h2{font-size:17px;margin:30px 0 8px;color:var(--acc)}
+  .dim{color:var(--dim)} .small{font-size:13px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:16px 18px;margin:14px 0}
+  table{border-collapse:collapse;width:100%;font-size:13.5px;margin:10px 0}
+  .scroll{overflow-x:auto}
+  th,td{border-bottom:1px solid var(--line);padding:8px 9px;text-align:left;vertical-align:top}
+  th{color:var(--dim);font-weight:600;font-size:12px;text-transform:uppercase;letter-spacing:.03em}
+  code{background:#0b0d11;padding:1px 5px;border-radius:4px;font-size:13px}
+  a{color:var(--acc)}
+  .back{font-size:13px;margin-bottom:18px;display:inline-block}
+  .lead{font-size:15.5px;border-left:3px solid var(--acc);padding-left:14px;margin:16px 0}
+  .tag{display:inline-block;padding:2px 8px;border-radius:99px;font-size:11.5px;font-weight:700}
+  .t-done{background:#123018;color:var(--good)} .t-fail{background:#3a1418;color:var(--bad)}
+  .num{text-align:right;font-variant-numeric:tabular-nums}
+  .stat{display:inline-block;min-width:150px;margin:6px 22px 6px 0}
+  .stat b{display:block;font-size:20px} .stat span{color:var(--dim);font-size:12px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<a class="back" href="../index.html">&larr; Groundswarm hub</a>
+<h1>Observability &mdash; incident_monitoring_swarm55 (55 workers)</h1>
+<div class="dim">Real per-call token counts and latency from the local Ollama server, captured by <code>OllamaClient</code> itself (not estimated). Scenario outcome: <span class="tag t-done">PASS</span></div>
+
+<div class="lead">
+Every number on this page comes straight from Ollama's own OpenAI-compatible <code>/v1/chat/completions</code>
+response (<code>usage.*</code> for tokens, <code>choices[0].logprobs</code> for perplexity), recorded on
+<code>OllamaClient.calls</code> at the moment each request returns. This is local inference &mdash; no
+Claude API tokens are spent running this scenario; this page exists so token/latency/confidence cost of
+the swarm itself is visible, not guessed at. Perplexity is <code>exp(-mean(token logprob))</code> over
+each call's generated tokens &mdash; lower means the model was more confident in the exact tokens it
+produced; it says nothing about whether those tokens are factually correct, that's what the Verifier is
+for.
+</div>
+
+<h2>Totals</h2>
+<div class="card">
+<div class="stat"><b>68</b><span>LLM calls</span></div>
+<div class="stat"><b>32,418</b><span>prompt tokens</span></div>
+<div class="stat"><b>10,333</b><span>completion tokens</span></div>
+<div class="stat"><b>42,751</b><span>total tokens</span></div>
+<div class="stat"><b>801.1s</b><span>wall time in Ollama calls</span></div>
+<div class="stat"><b>1.31</b><span>weighted avg perplexity</span></div>
+<div class="stat"><b>0</b><span>failed calls</span></div>
+</div>
+
+<h2>By phase</h2>
+<div class="scroll"><table><thead>
+<tr><th>Phase</th><th>Calls</th><th>Prompt tok</th><th>Completion tok</th><th>Total tok</th><th>Duration</th><th>Perplexity</th><th>Failed</th></tr>
+</thead><tbody>
+<tr><td>extract</td><td class='num'>55</td><td class='num'>26,510</td><td class='num'>9,552</td><td class='num'>36,062</td><td class='num'>711.2s</td><td class='num'>1.27</td><td class='num'></td></tr>
+<tr><td>judge</td><td class='num'>12</td><td class='num'>3,858</td><td class='num'>480</td><td class='num'>4,338</td><td class='num'>62.7s</td><td class='num'>1.40</td><td class='num'></td></tr>
+<tr><td>synthesis</td><td class='num'>1</td><td class='num'>2,050</td><td class='num'>301</td><td class='num'>2,351</td><td class='num'>27.2s</td><td class='num'>3.74</td><td class='num'></td></tr>
+</tbody></table></div>
+
+<h2>Every call, in order</h2>
+<div class="scroll"><table><thead>
+<tr><th>#</th><th>Label</th><th>Model</th><th>Prompt tok</th><th>Completion tok</th><th>Perplexity</th><th>Duration</th><th>Status</th></tr>
+</thead><tbody>
+<tr><td>1</td><td><code>extract:meridian_cache_r1</code></td><td>dolphin3:latest</td><td class='num'>490</td><td class='num'>167</td><td class='num'>2.79</td><td class='num'>11.88s</td><td><span class="tag t-done">ok</span></td></tr>
+<tr><td>2</td><td><code>extract:meridian_cache_r2</code></td><td>dolphin3:latest</td><td class='num'>490</td><td class='num'>273</td><td class='num'>1.21</td><td class='num'>17.83s</td><td><span class="tag t-done">ok</span></td></tr>
+<tr><td>3</td><td><code>extract:meridian_cache_r3</code></td><td>dolphin3:latest</td><td class='num'>490</td><td class='num'>185</td><td class='num'>1.26</td><td class='num'>13.22s</td><td><span class="tag t-done">ok</span></td></tr>
+<tr><td>4</td><td><code>extract:meridian_cache_r4</code></td><td>dolphin3:latest</td><td class='num'>490</td><td class='num'>101</td><td class='num'>1.30</td><td class='num'>8.23s</td><td><span class="tag t-done">ok</span></td></tr>
+<tr><td>5</td><td><code>extract:meridian_cache_r5</code></td><td>dolphin3:latest</td><td class='num'>490</td><td class='num'>272</td><td class='num'>1.38</td><td class='num'>18.50s</td><td><span class="tag t-done">ok</span></td></tr>
+<tr><td>6</td><td><code>extract:meridian_cache_r6</code></td><td>dolphin3:latest</td><td class='num'>490</td><td class='num'>162</td><td class='num'>1.09</td><td class='num'>12.05s</td><td><span class="tag t-done">ok</span></td></tr>
+<tr><td>7</td><td><code>extract:meridian_cache_r7</code></td><td>dolphin3:latest</td><td class='num'>490</td><td class='num'>306</td><td class='num'>1.22</td><td class='num'>21.31s</td><td><span class="tag t-done">ok</span></td></tr>
+<tr><td>8</td><td><code>extract:meridian_cache_r8</code></td><td>dolphin3:latest</td><td class='num'>490</td><td class='num'>49</td><td class='num'>1.38</td><td class='num'>6.19s</td><td><span class="tag t-done">ok</span></td></tr>
+<tr><td>9</td><td><code>extract:meridian_cache_r9</code></td><td>dolphin3:latest</td><td class='num'>490</td><td class='num'>203</td><td class='num'>1.26</td><td class='num'>15.66s</td><td><span class="tag t-done">ok</span></td></tr>
+<tr><td>10</td><td><code>extract:meridian_cache_r10</code></td><td>dolphin3:latest</td><td class='num'>490</td><td class='num'>95</td><td class='num'>1.46</td><td class='num'>8.92s</td><td><span class="tag t-done">ok</span></td></tr>
+<tr><td>11</td><td><code>extract:meridian_cache_r11</code></td><td>dolphin3:latest</td><td class='num'>490</td><td class='num'>84</td><td class='num'>1.36</td><td class='num'>8.47s</td><td><span class="tag t-done">ok</span></td></tr>
+<tr><td>12</td><td><code>extract:anchor_cdn_r1</code></td><td>dolphin3:latest</td><td class='num'>491</td><td class='num'>312</td><td class='num'>1.33</td><td class='num'>23.11s</td><td><span class="tag t-done">ok</span></td></tr>
+<tr><td>13</td><td><code>extract:anchor_cdn_r2</code></td><td>dolphin3:latest</td><td class='num'>491</td><td class='num'>127</td><td class='num'>1.47</td><td class='num'>9.56s</td><td><span class="tag t-done">ok</span></td></tr>
+<tr><td>14</td><td><code>extract:anchor_cdn_r3</code></td><td>dolphin3:latest</td><td class='num'>491</td><td class='num'>299</td><td class='num'>1.19</td><td class='num'>18.58s</td><td><span class="tag t-done">ok</span></td></tr>
+<tr><td>15</td><td><code>extract:anchor_cdn_r4</code></td><td>dolphin3:latest</td><td class='num'>491</td><td class='num'>319</td><td class='num'>1.15</td><td class='num'>19.89s</td><td><span class="tag t-done">ok</span></td></tr>
+<tr><td>16</td><td><code>extract:anchor_cdn_r5</code></td><td>dolphin3:latest</td><td class='num'>491</td><td class='num'>143</td><td class='num'>1.70</td><td class='num'>10.34s</td><td><span class="tag t-done">ok</span></td></tr>
+<tr><td>17</td><td><code>extract:anchor_cdn_r6</code></td><td>dolphin3:latest</td><td class='num'>491</td><td class='num'>322</td><td class='num'>1.06</td><td class='num'>23.81s</td><td><span class="tag t-done">ok</span></td></tr>
+<tr><td>18</td><td><code>extract:anchor_cdn_r7</code></td><td>dolphin3:latest</td><td class='num'>491</td><td class='num'>340</td><td class='num'>1.18</td><td class='num'>24.91s</td><td><span class="tag t-done">ok</span></td></tr>
+<tr><td>19</td><td><code>extract:anchor_cdn_r8</code></td><td>dolphin3:latest</td><td class='num'>491</td><td class='num'>66</td><td class='num'>1.37</td><td class='num'>6.91s</td><td><span class="tag t-done">ok</span></td></tr>
+<tr><td>20</td><td><code>extract:anchor_cdn_r9</code></td><td>dolphin3:latest</td><td class='num'>491</td><td class='num'>352</td><td class='num'>1.02</td><td class='num'>24.73s</td><td><span class="tag t-done">ok</span></td></tr>
+<tr><td>21</td><td><code>extract:anchor_cdn_r10</code></td><td>dolphin3:latest</td><td class='num'>491</td><td class='num'>87</td><td class='num'>2.14</td><td class='num'>7.23s</td><td><span class="tag t-done">ok</span></td></tr>
+<tr><td>22</td><td><code>extract:anchor_cdn_r11</code></td><td>dolphin3:latest</td><td class='num'>491</td><td class='num'>226</td><td class='num'>1.14</td><td class='num'>15.05s</td><td><span class="tag t-done">ok</span></td></tr>
+<tr><td>23</td><td><code>extract:solace_queue_r1</code></td><td>dolphin3:latest</td><td class='num'>475</td><td class='num'>141</td><td class='num'>1.21</td><td class='num'>10.58s</td><td><span class="tag t-done">ok</span></td></tr>
+<tr><td>24</td><td><code>extract:solace_queue_r2</code></td><td>dolphin3:latest</td><td class='num'>475</td><td class='num'>89</td><td class='num'>2.23</td><td class='num'>6.62s</td><td><span class="tag t-done">ok</span></td></tr>
+<tr><td>25</td><td><code>extract:solace_queue_r3</code></td><td>dolphin3:latest</td><td class='num'>475</td><td class='num'>108</td><td class='num'>1.24</td><td class='num'>8.02s</td><td><span class="tag t-done">ok</span></td></tr>
+<tr><td>26</td><td><code>extract:solace_queue_r4</code></td><td>dolphin3:latest</td><td class='num'>475</td><td class='num'>206</td><td class='num'>1.11</td><td class='num'>13.88s</td><td><span class="tag t-done">ok</span></td></tr>
+<tr><td>27</td><td><code>extract:solace_queue_r5</code></td><td>dolphin3:latest</td><td class='num'>475</td><td class='num'>93</td><td class='num'>1.23</td><td class='num'>7.25s</td><td><span class="tag t-done">ok</span></td></tr>
+<tr><td>28</td><td><code>extract:solace_queue_r6</code></td><td>dolphin3:latest</td><td class='num'>475</td><td class='num'>147</td><td class='num'>1.66</td><td class='num'>10.84s</td><td><span class="tag t-done">ok</span></td></tr>
+<tr><td>29</td><td><code>extract:solace_queue_r7</code></td><td>dolphin3:latest</td><td class='num'>475</td><td class='num'>215</td><td class='num'>1.11</td><td class='num'>15.42s</td><td><span class="tag t-done">ok</span></td></tr>
+<tr><td>30</td><td><code>extract:solace_queue_r8</code></td><td>dolphin3:latest</td><td class='num'>475</td><td class='num'>39</td><td class='num'>1.92</td><td class='num'>5.53s</td><td><span class="tag t-done">ok</span></td></tr>
+<tr><td>31</td><td><code>extract:solace_queue_r9</code></td><td>dolphin3:latest</td><td class='num'>475</td><td class='num'>197</td><td class='num'>1.36</td><td class='num'>16.02s</td><td><span class="tag t-done">ok</span></td></tr>
+<tr><td>32</td><td><code>extract:solace_queue_r10</code></td><td>dolphin3:latest</td><td class='num'>475</td><td class='num'>71</td><td class='num'>1.34</td><td class='num'>7.20s</td><td><span class="tag t-done">ok</span></td></tr>
+<tr><td>33</td><td><code>extract:solace_queue_r11</code></td><td>dolphin3:latest</td><td class='num'>475</td><td class='num'>152</td><td class='num'>1.04</td><td class='num'>13.30s</td><td><span class="tag t-done">ok</span></td></tr>
+<tr><td>34</td><td><code>extract:ridgeline_auth_r1</code></td><td>dolphin3:latest</td><td class='num'>455</td><td class='num'>75</td><td class='num'>1.13</td><td class='num'>7.76s</td><td><span class="tag t-done">ok</span></td></tr>
+<tr><td>35</td><td><code>extract:ridgeline_auth_r2</code></td><td>dolphin3:latest</td><td class='num'>455</td><td class='num'>221</td><td class='num'>1.02</td><td class='num'>15.97s</td><td><span class="tag t-done">ok</span></td></tr>
+<tr><td>36</td><td><code>extract:ridgeline_auth_r3</code></td><td>dolphin3:latest</td><td class='num'>455</td><td class='num'>221</td><td class='num'>1.02</td><td class='num'>15.77s</td><td><span class="tag t-done">ok</span></td></tr>
+<tr><td>37</td><td><code>extract:ridgeline_auth_r4</code></td><td>dolphin3:latest</td><td class='num'>455</td><td class='num'>275</td><td class='num'>1.23</td><td class='num'>17.38s</td><td><span class="tag t-done">ok</span></td></tr>
+<tr><td>38</td><td><code>extract:ridgeline_auth_r5</code></td><td>dolphin3:latest</td><td class='num'>455</td><td class='num'>157</td><td class='num'>1.11</td><td class='num'>10.80s</td><td><span class="tag t-done">ok</span></td></tr>
+<tr><td>39</td><td><code>extract:ridgeline_auth_r6</code></td><td>dolphin3:latest</td><td class='num'>455</td><td class='num'>221</td><td class='num'>1.02</td><td class='num'>14.27s</td><td><span class="tag t-done">ok</span></td></tr>
+<tr><td>40</td><td><code>extract:ridgeline_auth_r7</code></td><td>dolphin3:latest</td><td class='num'>455</td><td class='num'>149</td><td class='num'>1.53</td><td class='num'>10.33s</td><td><span class="tag t-done">ok</span></td></tr>
+<tr><td>41</td><td><code>extract:ridgeline_auth_r8</code></td><td>dolphin3:latest</td><td class='num'>455</td><td class='num'>77</td><td class='num'>1.24</td><td class='num'>6.55s</td><td><span class="tag t-done">ok</span></td></tr>
+<tr><td>42</td><td><code>extract:ridgeline_auth_r9</code></td><td>dolphin3:latest</td><td class='num'>455</td><td class='num'>78</td><td class='num'>1.09</td><td class='num'>6.66s</td><td><span class="tag t-done">ok</span></td></tr>
+<tr><td>43</td><td><code>extract:ridgeline_auth_r10</code></td><td>dolphin3:latest</td><td class='num'>455</td><td class='num'>210</td><td class='num'>1.21</td><td class='num'>16.73s</td><td><span class="tag t-done">ok</span></td></tr>
+<tr><td>44</td><td><code>extract:ridgeline_auth_r11</code></td><td>dolphin3:latest</td><td class='num'>455</td><td class='num'>144</td><td class='num'>1.43</td><td class='num'>12.95s</td><td><span class="tag t-done">ok</span></td></tr>
+<tr><td>45</td><td><code>extract:cobalt_storage_r1</code></td><td>dolphin3:latest</td><td class='num'>499</td><td class='num'>325</td><td class='num'>2.26</td><td class='num'>23.27s</td><td><span class="tag t-done">ok</span></td></tr>
+<tr><td>46</td><td><code>extract:cobalt_storage_r2</code></td><td>dolphin3:latest</td><td class='num'>499</td><td class='num'>93</td><td class='num'>1.04</td><td class='num'>8.56s</td><td><span class="tag t-done">ok</span></td></tr>
+<tr><td>47</td><td><code>extract:cobalt_storage_r3</code></td><td>dolphin3:latest</td><td class='num'>499</td><td class='num'>77</td><td class='num'>1.12</td><td class='num'>7.62s</td><td><span class="tag t-done">ok</span></td></tr>
+<tr><td>48</td><td><code>extract:cobalt_storage_r4</code></td><td>dolphin3:latest</td><td class='num'>499</td><td class='num'>62</td><td class='num'>1.62</td><td class='num'>6.72s</td><td><span class="tag t-done">ok</span></td></tr>
+<tr><td>49</td><td><code>extract:cobalt_storage_r5</code></td><td>dolphin3:latest</td><td class='num'>499</td><td class='num'>237</td><td class='num'>1.49</td><td class='num'>17.38s</td><td><span class="tag t-done">ok</span></td></tr>
+<tr><td>50</td><td><code>extract:cobalt_storage_r6</code></td><td>dolphin3:latest</td><td class='num'>499</td><td class='num'>182</td><td class='num'>1.25</td><td class='num'>14.39s</td><td><span class="tag t-done">ok</span></td></tr>
+<tr><td>51</td><td><code>extract:cobalt_storage_r7</code></td><td>dolphin3:latest</td><td class='num'>499</td><td class='num'>186</td><td class='num'>1.10</td><td class='num'>12.64s</td><td><span class="tag t-done">ok</span></td></tr>
+<tr><td>52</td><td><code>extract:cobalt_storage_r8</code></td><td>dolphin3:latest</td><td class='num'>499</td><td class='num'>72</td><td class='num'>1.16</td><td class='num'>6.45s</td><td><span class="tag t-done">ok</span></td></tr>
+<tr><td>53</td><td><code>extract:cobalt_storage_r9</code></td><td>dolphin3:latest</td><td class='num'>499</td><td class='num'>159</td><td class='num'>1.11</td><td class='num'>10.94s</td><td><span class="tag t-done">ok</span></td></tr>
+<tr><td>54</td><td><code>extract:cobalt_storage_r10</code></td><td>dolphin3:latest</td><td class='num'>499</td><td class='num'>87</td><td class='num'>1.08</td><td class='num'>7.31s</td><td><span class="tag t-done">ok</span></td></tr>
+<tr><td>55</td><td><code>extract:cobalt_storage_r11</code></td><td>dolphin3:latest</td><td class='num'>499</td><td class='num'>296</td><td class='num'>1.13</td><td class='num'>19.76s</td><td><span class="tag t-done">ok</span></td></tr>
+<tr><td>56</td><td><code>synthesis</code></td><td>dolphin3:latest</td><td class='num'>2050</td><td class='num'>301</td><td class='num'>3.74</td><td class='num'>27.16s</td><td><span class="tag t-done">ok</span></td></tr>
+<tr><td>57</td><td><code>judge:meridian_cache_r5</code></td><td>dolphin3:latest</td><td class='num'>329</td><td class='num'>49</td><td class='num'>1.09</td><td class='num'>5.99s</td><td><span class="tag t-done">ok</span></td></tr>
+<tr><td>58</td><td><code>judge:anchor_cdn_r6</code></td><td>dolphin3:latest</td><td class='num'>323</td><td class='num'>44</td><td class='num'>1.32</td><td class='num'>5.24s</td><td><span class="tag t-done">ok</span></td></tr>
+<tr><td>59</td><td><code>judge:anchor_cdn_r6</code></td><td>dolphin3:latest</td><td class='num'>373</td><td class='num'>46</td><td class='num'>1.74</td><td class='num'>5.25s</td><td><span class="tag t-done">ok</span></td></tr>
+<tr><td>60</td><td><code>judge:anchor_cdn_r6</code></td><td>dolphin3:latest</td><td class='num'>349</td><td class='num'>48</td><td class='num'>1.70</td><td class='num'>5.25s</td><td><span class="tag t-done">ok</span></td></tr>
+<tr><td>61</td><td><code>judge:anchor_cdn_r11</code></td><td>dolphin3:latest</td><td class='num'>323</td><td class='num'>43</td><td class='num'>1.65</td><td class='num'>5.92s</td><td><span class="tag t-done">ok</span></td></tr>
+<tr><td>62</td><td><code>judge:anchor_cdn_r11</code></td><td>dolphin3:latest</td><td class='num'>342</td><td class='num'>62</td><td class='num'>1.35</td><td class='num'>6.25s</td><td><span class="tag t-done">ok</span></td></tr>
+<tr><td>63</td><td><code>judge:anchor_cdn_r11</code></td><td>dolphin3:latest</td><td class='num'>312</td><td class='num'>32</td><td class='num'>1.09</td><td class='num'>5.24s</td><td><span class="tag t-done">ok</span></td></tr>
+<tr><td>64</td><td><code>judge:ridgeline_auth_r5</code></td><td>dolphin3:latest</td><td class='num'>276</td><td class='num'>24</td><td class='num'>1.67</td><td class='num'>4.42s</td><td><span class="tag t-done">ok</span></td></tr>
+<tr><td>65</td><td><code>judge:ridgeline_auth_r10</code></td><td>dolphin3:latest</td><td class='num'>291</td><td class='num'>47</td><td class='num'>1.21</td><td class='num'>5.39s</td><td><span class="tag t-done">ok</span></td></tr>
+<tr><td>66</td><td><code>judge:cobalt_storage_r7</code></td><td>dolphin3:latest</td><td class='num'>343</td><td class='num'>20</td><td class='num'>1.72</td><td class='num'>3.88s</td><td><span class="tag t-done">ok</span></td></tr>
+<tr><td>67</td><td><code>judge:injected_by_script</code></td><td>dolphin3:latest</td><td class='num'>316</td><td class='num'>42</td><td class='num'>1.20</td><td class='num'>5.51s</td><td><span class="tag t-done">ok</span></td></tr>
+<tr><td>68</td><td><code>judge:injected_by_script</code></td><td>dolphin3:latest</td><td class='num'>281</td><td class='num'>23</td><td class='num'>1.60</td><td class='num'>4.41s</td><td><span class="tag t-done">ok</span></td></tr>
+</tbody></table></div>
+
+<h2>Notes</h2><div class="card">55 workers = 5 source documents x 11 repeats each (identical input per repeat, isolating model sampling stochasticity). 5 fabricated claims injected, one per source. Compare against the <a href='./observability.html'>2-worker</a> and <a href='./observability-swarm.html'>5-worker</a> reports.<br><br><b>Quote-inclusion rate per source (n=11 repeats each):</b><br><b>meridian_cache</b>: 24/33 claims quoted (4 all-quoted / 0 zero-quote / 7 mixed calls, of 11 repeats)<br><b>anchor_cdn</b>: 29/38 claims quoted (7 all-quoted / 0 zero-quote / 4 mixed calls, of 11 repeats)<br><b>solace_queue</b>: 22/27 claims quoted (6 all-quoted / 0 zero-quote / 5 mixed calls, of 11 repeats)<br><b>ridgeline_auth</b>: 26/28 claims quoted (9 all-quoted / 0 zero-quote / 2 mixed calls, of 11 repeats)<br><b>cobalt_storage</b>: 21/25 claims quoted (8 all-quoted / 0 zero-quote / 3 mixed calls, of 11 repeats)</div>
+
+</div>
+</body>
+</html>

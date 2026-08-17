@@ -22,9 +22,11 @@ from groundswarm.orchestrator.orchestrator import Orchestrator
 from groundswarm.verifier.verifier import Verifier
 from groundswarm.memory.schema import MemoryEntry, Scope
 from groundswarm.memory.store import MemoryStore
+from groundswarm.observability import render_observability_html
 
 SCENARIO_DIR = Path(__file__).resolve().parent
 SOURCES_DIR = SCENARIO_DIR / "sources"
+REPORT_PATH = SCENARIO_DIR.parents[1] / "html" / "ops" / "observability.html"
 
 FABRICATED_CLAIM_TEXT = (
     "Vendor A's outage caused permanent data loss in us-east-2."
@@ -136,6 +138,28 @@ def main() -> int:
         )
         store.write(entry)
     print(f"\nWrote {len(confirmed)} confirmed claim(s) to Memory ({memory_db}).")
+
+    total_tokens = sum((c.prompt_tokens or 0) + (c.completion_tokens or 0) for c in client.calls if c.success)
+    total_duration = sum(c.duration_s or 0.0 for c in client.calls)
+    print(f"\nObservability: {len(client.calls)} Ollama call(s), {total_tokens:,} total tokens, "
+          f"{total_duration:.1f}s in-call wall time.")
+
+    REPORT_PATH.parent.mkdir(parents=True, exist_ok=True)
+    REPORT_PATH.write_text(
+        render_observability_html(
+            scenario_name="incident_monitoring",
+            calls=client.calls,
+            pass_fail=all_fabrications_caught,
+            notes=(
+                "Two fabricated claims were injected by this script (not produced by any model): "
+                "one with a fake quote (caught by the deterministic check, zero extra Ollama calls), "
+                "one with no quote (caught, or not, by the <code>judge:injected_by_script</code> "
+                "call(s) in the table above)."
+            ),
+        ),
+        encoding="utf-8",
+    )
+    print(f"Wrote observability report to {REPORT_PATH}")
 
     return 0 if all_fabrications_caught else 1
 

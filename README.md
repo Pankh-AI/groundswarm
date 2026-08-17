@@ -1,6 +1,12 @@
 # Groundswarm
 
-A swarm of agents that only tells you what it can prove.
+A swarm that shows its work — or shuts up.
+
+**Technical invariant:** Groundswarm will not present a factual claim as
+verified unless it can attach independently revalidated evidence or a
+deterministic derivation. (Not "proof" — an LLM judge's agreement is not
+proof, and claiming otherwise would be exactly the kind of unfalsifiable
+marketing this project exists to be the opposite of.)
 
 ## The problem
 

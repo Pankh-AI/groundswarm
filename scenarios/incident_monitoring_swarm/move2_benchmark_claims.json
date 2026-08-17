@@ -1,0 +1,767 @@
+{
+  "swarm_real_claims": [
+    {
+      "worker_id": "anchor_cdn",
+      "source": "anchor_cdn_postmortem.txt",
+      "text": "Expired TLS certificate caused HTTPS requests to fail for 34 minutes.",
+      "quote": "an automated TLS certificate for Anchor CDN's api.anchorcdn.net endpoint expired without being renewed, causing all HTTPS requests to that hostname to fail with certificate validation errors for 34 minutes.",
+      "computation": null,
+      "ground_truth_category": null,
+      "groundswarm_verdict": "confirmed",
+      "groundswarm_method": "deterministic",
+      "groundswarm_reason": "quote round-trips into the live-refetched source"
+    },
+    {
+      "worker_id": "anchor_cdn",
+      "source": "anchor_cdn_postmortem.txt",
+      "text": "100% of traffic to the specific hostname was affected.",
+      "quote": "Roughly 100% of traffic to that specific hostname was affected;",
+      "computation": null,
+      "ground_truth_category": null,
+      "groundswarm_verdict": "confirmed",
+      "groundswarm_method": "deterministic",
+      "groundswarm_reason": "quote round-trips into the live-refetched source"
+    },
+    {
+      "worker_id": "anchor_cdn",
+      "source": "anchor_cdn_postmortem.txt",
+      "text": "Renewal failure was due to an expired API token used by the certificate-renewal automation.",
+      "quote": "The renewal failure was traced to an expired API token used by the certificate-renewal automation, which had not been rotated since the automation was last updated.",
+      "computation": null,
+      "ground_truth_category": null,
+      "groundswarm_verdict": "confirmed",
+      "groundswarm_method": "deterministic",
+      "groundswarm_reason": "quote round-trips into the live-refetched source"
+    },
+    {
+      "worker_id": "anchor_cdn",
+      "source": "anchor_cdn_postmortem.txt",
+      "text": "Manual intervention resolved the issue in 14 minutes.",
+      "quote": "On-call engineers were paged by an external uptime monitor at 06:19 UTC, manually issued a new certificate at 06:28 UTC, and completed rollout to all edge nodes by 06:34 UTC.",
+      "computation": null,
+      "ground_truth_category": null,
+      "groundswarm_verdict": "confirmed",
+      "groundswarm_method": "deterministic",
+      "groundswarm_reason": "quote round-trips into the live-refetched source"
+    },
+    {
+      "worker_id": "anchor_cdn",
+      "source": "anchor_cdn_postmortem.txt",
+      "text": "Anchor CDN is implementing 14-day-before-expiry alert for renewal-automation.",
+      "quote": "Anchor CDN is adding a 14-day-before-expiry alert for all renewal-automation credentials and moving certificate renewal to a credential-less workload-identity flow.",
+      "computation": null,
+      "ground_truth_category": null,
+      "groundswarm_verdict": "confirmed",
+      "groundswarm_method": "deterministic",
+      "groundswarm_reason": "quote round-trips into the live-refetched source"
+    },
+    {
+      "worker_id": "cobalt_storage",
+      "source": "cobalt_storage_postmortem.txt",
+      "text": "Approximately 3% of read requests routed to that node experienced latency above 2 seconds",
+      "quote": "Approximately 3% of read requests routed to that node experienced latency above 2 seconds,",
+      "computation": null,
+      "ground_truth_category": null,
+      "groundswarm_verdict": "confirmed",
+      "groundswarm_method": "deterministic",
+      "groundswarm_reason": "quote round-trips into the live-refetched source"
+    },
+    {
+      "worker_id": "cobalt_storage",
+      "source": "cobalt_storage_postmortem.txt",
+      "text": "Incident lasted for 51 minutes",
+      "quote": null,
+      "computation": {
+        "operation": "duration_minutes",
+        "operands": [
+          {
+            "value": "Starting at 02:50 UTC on 2026-07-29,"
+          },
+          {
+            "value": "the degraded node was identified through per-node latency percentile alerting at 03:31 UTC,"
+          }
+        ],
+        "result": 51
+      },
+      "ground_truth_category": null,
+      "groundswarm_verdict": "unverified",
+      "groundswarm_method": "fail_closed",
+      "groundswarm_reason": "computation payload malformed: 'quote'"
+    },
+    {
+      "worker_id": "cobalt_storage",
+      "source": "cobalt_storage_postmortem.txt",
+      "text": "Cobalt Storage is lowering its node health-check latency threshold and adding an automatic drain trigger",
+      "quote": null,
+      "computation": null,
+      "ground_truth_category": null,
+      "groundswarm_verdict": "confirmed",
+      "groundswarm_method": "llm_judge",
+      "groundswarm_reason": "The source explicitly states that Cobalt Storage is lowering its node health-check latency threshold and adding an automatic drain trigger."
+    },
+    {
+      "worker_id": "meridian_cache",
+      "source": "meridian_cache_postmortem.txt",
+      "text": "The incident caused approximately 22% of read requests to receive stale content.",
+      "quote": "Approximately 22% of read requests during the incident window received content older than the configured 5-minute freshness window.",
+      "computation": null,
+      "ground_truth_category": null,
+      "groundswarm_verdict": "confirmed",
+      "groundswarm_method": "deterministic",
+      "groundswarm_reason": "quote round-trips into the live-refetched source"
+    },
+    {
+      "worker_id": "meridian_cache",
+      "source": "meridian_cache_postmortem.txt",
+      "text": "The incident was resolved in 27 minutes.",
+      "quote": null,
+      "computation": {
+        "operation": "duration_minutes",
+        "operands": [
+          {
+            "value": "03:27 UTC",
+            "quote": "Incident was detected by an automated staleness monitor at 03:22 UTC and the broker partition was manually rebalanced at 03:27 UTC."
+          },
+          {
+            "value": "03:22 UTC",
+            "quote": "Incident was detected by an automated staleness monitor at 03:22 UTC."
+          }
+        ],
+        "result": 27
+      },
+      "ground_truth_category": null,
+      "groundswarm_verdict": "rejected",
+      "groundswarm_method": "computation",
+      "groundswarm_reason": "operand 1 quote does not appear in the source text: 'Incident was detected by an automated staleness monitor at 03:22 UTC.'"
+    },
+    {
+      "worker_id": "ridgeline_auth",
+      "source": "ridgeline_auth_postmortem.txt",
+      "text": "The 22-minute incident window was the time from when the issue started to when it was resolved.",
+      "quote": "20:02 UTC on 2026-07-15, to 20:24 UTC on 2026-07-15",
+      "computation": null,
+      "ground_truth_category": null,
+      "groundswarm_verdict": "rejected",
+      "groundswarm_method": "deterministic",
+      "groundswarm_reason": "quote does not appear in the source text, invented or altered"
+    },
+    {
+      "worker_id": "ridgeline_auth",
+      "source": "ridgeline_auth_postmortem.txt",
+      "text": "Six percent of session-refresh requests failed.",
+      "quote": "Approximately 6% of session-refresh requests failed",
+      "computation": null,
+      "ground_truth_category": null,
+      "groundswarm_verdict": "confirmed",
+      "groundswarm_method": "deterministic",
+      "groundswarm_reason": "quote round-trips into the live-refetched source"
+    },
+    {
+      "worker_id": "ridgeline_auth",
+      "source": "ridgeline_auth_postmortem.txt",
+      "text": "The batch job was running for 12 minutes before being killed.",
+      "quote": "was identified via connection-pool saturation alerts at 20:11 UTC",
+      "computation": null,
+      "ground_truth_category": null,
+      "groundswarm_verdict": "confirmed",
+      "groundswarm_method": "deterministic",
+      "groundswarm_reason": "quote round-trips into the live-refetched source"
+    },
+    {
+      "worker_id": "ridgeline_auth",
+      "source": "ridgeline_auth_postmortem.txt",
+      "text": "Killing the job took 2 minutes, as the connection pool recovered within 10 minutes.",
+      "quote": "and killed at 20:14 UTC, after which the connection pool recovered automatically within 10 minutes",
+      "computation": null,
+      "ground_truth_category": null,
+      "groundswarm_verdict": "confirmed",
+      "groundswarm_method": "deterministic",
+      "groundswarm_reason": "quote round-trips into the live-refetched source"
+    },
+    {
+      "worker_id": "ridgeline_auth",
+      "source": "ridgeline_auth_postmortem.txt",
+      "text": "The job was identified at 20:11 and killed at 20:14 - 3 minutes after identification.",
+      "quote": "was identified via connection-pool saturation alerts at 20:11 UTC, and killed at 20:14 UTC",
+      "computation": null,
+      "ground_truth_category": null,
+      "groundswarm_verdict": "rejected",
+      "groundswarm_method": "deterministic",
+      "groundswarm_reason": "quote does not appear in the source text, invented or altered"
+    },
+    {
+      "worker_id": "solace_queue",
+      "source": "solace_queue_postmortem.txt",
+      "text": "The delay in messages was up to 19 minutes.",
+      "quote": "delivering order-event by up to 19 minutes for affected customers.",
+      "computation": null,
+      "ground_truth_category": null,
+      "groundswarm_verdict": "rejected",
+      "groundswarm_method": "deterministic",
+      "groundswarm_reason": "quote does not appear in the source text, invented or altered"
+    },
+    {
+      "worker_id": "solace_queue",
+      "source": "solace_queue_postmortem.txt",
+      "text": "The backlog of unacknowledged messages reached 340,000.",
+      "quote": "Consumer lag grew to approximately 340,000 unacknowledged messages at peak.",
+      "computation": null,
+      "ground_truth_category": null,
+      "groundswarm_verdict": "rejected",
+      "groundswarm_method": "deterministic",
+      "groundswarm_reason": "quote does not appear in the source text, invented or altered"
+    },
+    {
+      "worker_id": "solace_queue",
+      "source": "solace_queue_postmortem.txt",
+      "text": "Consumer lag stabilized within 8 minutes after adjusting concurrency limits.",
+      "quote": "stabilized lag within 8 minutes.",
+      "computation": null,
+      "ground_truth_category": null,
+      "groundswarm_verdict": "confirmed",
+      "groundswarm_method": "deterministic",
+      "groundswarm_reason": "quote round-trips into the live-refetched source"
+    },
+    {
+      "worker_id": "solace_queue",
+      "source": "solace_queue_postmortem.txt",
+      "text": "Full backlog drain was completed at 12:52 UTC.",
+      "quote": "Full backlog drain completed at 12:52 UTC.",
+      "computation": null,
+      "ground_truth_category": null,
+      "groundswarm_verdict": "confirmed",
+      "groundswarm_method": "deterministic",
+      "groundswarm_reason": "quote round-trips into the live-refetched source"
+    },
+    {
+      "worker_id": "solace_queue",
+      "source": "solace_queue_postmortem.txt",
+      "text": "The slow downstream webhook receiver was identified by engineers at 12:03 UTC.",
+      "quote": "Engineers identified the slow receiver via consumer-lag alerting at 12:03 UTC.",
+      "computation": null,
+      "ground_truth_category": null,
+      "groundswarm_verdict": "rejected",
+      "groundswarm_method": "deterministic",
+      "groundswarm_reason": "quote does not appear in the source text, invented or altered"
+    }
+  ],
+  "single_agent_real_claims": [
+    {
+      "worker_id": "single_agent",
+      "source": "anchor_cdn_postmortem.txt",
+      "text": "An automated TLS certificate for Anchor CDN's api.anchorcdn.net endpoint expired without being renewed, causing all HTTPS requests to that hostname to fail with certificate validation errors for 34 minutes.",
+      "quote": "An automated TLS certificate for Anchor CDN's api.anchorcdn.net endpoint expired without being renewed, causing all HTTPS requests to that hostname to fail with certificate validation errors for 34 minutes.",
+      "computation": null,
+      "ground_truth_category": null,
+      "groundswarm_verdict": null,
+      "groundswarm_method": null,
+      "groundswarm_reason": null
+    },
+    {
+      "worker_id": "single_agent",
+      "source": "cobalt_storage_postmortem.txt",
+      "text": "Approximately 3% of read requests routed to that node experienced latency above 2 seconds, versus a normal p99 of 80 milliseconds, for a duration of 51 minutes.",
+      "quote": "Approximately 3% of read requests routed to that node experienced latency above 2 seconds, versus a normal p99 of 80 milliseconds, for a duration of 51 minutes.",
+      "computation": null,
+      "ground_truth_category": null,
+      "groundswarm_verdict": null,
+      "groundswarm_method": null,
+      "groundswarm_reason": null
+    },
+    {
+      "worker_id": "single_agent",
+      "source": "meridian_cache_postmortem.txt",
+      "text": "Approximately 22% of read requests during the incident window received content older than the configured 5-minute freshness window.",
+      "quote": "Approximately 22% of read requests during the incident window received content older than the configured 5-minute freshness window.",
+      "computation": null,
+      "ground_truth_category": null,
+      "groundswarm_verdict": null,
+      "groundswarm_method": null,
+      "groundswarm_reason": null
+    },
+    {
+      "worker_id": "single_agent",
+      "source": "ridgeline_auth_postmortem.txt",
+      "text": "Approximately 6% of session-refresh requests failed during the 22-minute incident window.",
+      "quote": "Approximately 6% of session-refresh requests failed during the 22-minute incident window.",
+      "computation": null,
+      "ground_truth_category": null,
+      "groundswarm_verdict": null,
+      "groundswarm_method": null,
+      "groundswarm_reason": null
+    },
+    {
+      "worker_id": "single_agent",
+      "source": "solace_queue_postmortem.txt",
+      "text": "Consumer lag grew to approximately 340,000 unacknowledged messages at peak, delaying order-event delivery by up to 19 minutes for affected customers.",
+      "quote": "Consumer lag grew to approximately 340,000 unacknowledged messages at peak, delaying order-event delivery by up to 19 minutes for affected customers.",
+      "computation": null,
+      "ground_truth_category": null,
+      "groundswarm_verdict": null,
+      "groundswarm_method": null,
+      "groundswarm_reason": null
+    }
+  ],
+  "ground_truth_claims": [
+    {
+      "worker_id": "ground_truth_0",
+      "source": "anchor_cdn_postmortem.txt",
+      "text": "Anchor CDN's certificate incident affected only the api.anchorcdn.net hostname; other Anchor CDN hostnames were unaffected.",
+      "quote": "traffic to other Anchor CDN hostnames was unaffected",
+      "computation": null,
+      "ground_truth_category": "supported",
+      "groundswarm_verdict": "confirmed",
+      "groundswarm_method": "deterministic",
+      "groundswarm_reason": "quote round-trips into the live-refetched source"
+    },
+    {
+      "worker_id": "ground_truth_1",
+      "source": "anchor_cdn_postmortem.txt",
+      "text": "15 minutes elapsed between Anchor CDN's on-call page and full edge rollout of the new certificate.",
+      "quote": null,
+      "computation": {
+        "operation": "duration_minutes",
+        "operands": [
+          {
+            "value": "06:19",
+            "quote": "paged by an external uptime monitor at 06:19 UTC"
+          },
+          {
+            "value": "06:34",
+            "quote": "completed rollout to all edge nodes by 06:34 UTC"
+          }
+        ],
+        "result": 15.0
+      },
+      "ground_truth_category": "supported",
+      "groundswarm_verdict": "confirmed",
+      "groundswarm_method": "computation",
+      "groundswarm_reason": "recomputed duration_minutes = 15, matches claimed 15.0"
+    },
+    {
+      "worker_id": "ground_truth_2",
+      "source": "anchor_cdn_postmortem.txt",
+      "text": "Anchor CDN lost customer credentials stored in the affected certificate.",
+      "quote": null,
+      "computation": null,
+      "ground_truth_category": "unsupported",
+      "groundswarm_verdict": "rejected",
+      "groundswarm_method": "llm_judge",
+      "groundswarm_reason": "The source text specifically states that the failure to renew the certificate led to a 34-minute outage of HTTPS traffic to the specific hostname, but it does not mention any loss of customer credentials stored in the affected certificate."
+    },
+    {
+      "worker_id": "ground_truth_3",
+      "source": "anchor_cdn_postmortem.txt",
+      "text": "The expired API token belonged to a contractor account rather than an internal service account.",
+      "quote": null,
+      "computation": null,
+      "ground_truth_category": "unverifiable",
+      "groundswarm_verdict": "rejected",
+      "groundswarm_method": "llm_judge",
+      "groundswarm_reason": "The claim is not supported because there is no information in the source about the type of account that owned the expired API token."
+    },
+    {
+      "worker_id": "ground_truth_4",
+      "source": "anchor_cdn_postmortem.txt",
+      "text": "Anchor CDN's incident was detected by an automated staleness monitor.",
+      "quote": "detected by an automated staleness monitor",
+      "computation": null,
+      "ground_truth_category": "wrong_attribution",
+      "groundswarm_verdict": "rejected",
+      "groundswarm_method": "deterministic",
+      "groundswarm_reason": "quote does not appear in the source text, invented or altered"
+    },
+    {
+      "worker_id": "ground_truth_5",
+      "source": "anchor_cdn_postmortem.txt",
+      "text": "Anchor CDN's certificate failure lasted 44 minutes, from expiry to full edge rollout.",
+      "quote": null,
+      "computation": {
+        "operation": "duration_minutes",
+        "operands": [
+          {
+            "value": "06:00",
+            "quote": "At 06:00 UTC on 2026-06-22"
+          },
+          {
+            "value": "06:34",
+            "quote": "completed rollout to all edge nodes by 06:34 UTC"
+          }
+        ],
+        "result": 44.0
+      },
+      "ground_truth_category": "incorrect_computation",
+      "groundswarm_verdict": "rejected",
+      "groundswarm_method": "computation",
+      "groundswarm_reason": "recomputed duration_minutes = 34, but claim asserts 44.0"
+    },
+    {
+      "worker_id": "ground_truth_6",
+      "source": "cobalt_storage_postmortem.txt",
+      "text": "No write requests were affected by Cobalt Storage's degraded-node incident, and no data was lost.",
+      "quote": "No write requests were affected, and no data was lost",
+      "computation": null,
+      "ground_truth_category": "supported",
+      "groundswarm_verdict": "confirmed",
+      "groundswarm_method": "deterministic",
+      "groundswarm_reason": "quote round-trips into the live-refetched source"
+    },
+    {
+      "worker_id": "ground_truth_7",
+      "source": "cobalt_storage_postmortem.txt",
+      "text": "10 minutes elapsed between Cobalt Storage detecting the degraded node and draining it from the read path.",
+      "quote": null,
+      "computation": {
+        "operation": "duration_minutes",
+        "operands": [
+          {
+            "value": "03:31",
+            "quote": "identified through per-node latency percentile alerting at 03:31 UTC"
+          },
+          {
+            "value": "03:41",
+            "quote": "drained from the read path at 03:41 UTC"
+          }
+        ],
+        "result": 10.0
+      },
+      "ground_truth_category": "supported",
+      "groundswarm_verdict": "confirmed",
+      "groundswarm_method": "computation",
+      "groundswarm_reason": "recomputed duration_minutes = 10, matches claimed 10.0"
+    },
+    {
+      "worker_id": "ground_truth_8",
+      "source": "cobalt_storage_postmortem.txt",
+      "text": "Cobalt Storage's eu-central-1 incident triggered a full regional failover to a backup datacenter.",
+      "quote": null,
+      "computation": null,
+      "ground_truth_category": "unsupported",
+      "groundswarm_verdict": "rejected",
+      "groundswarm_method": "llm_judge",
+      "groundswarm_reason": "The source text only mentions a single storage node experiencing degraded performance, with no mention of a full regional failover to a backup datacenter."
+    },
+    {
+      "worker_id": "ground_truth_9",
+      "source": "cobalt_storage_postmortem.txt",
+      "text": "The failing disk had been in service for over four years before it began degrading.",
+      "quote": null,
+      "computation": null,
+      "ground_truth_category": "unverifiable",
+      "groundswarm_verdict": "rejected",
+      "groundswarm_method": "llm_judge",
+      "groundswarm_reason": "The source text does not explicitly state how long the failing disk had been in service."
+    },
+    {
+      "worker_id": "ground_truth_10",
+      "source": "cobalt_storage_postmortem.txt",
+      "text": "Cobalt Storage's incident was caused by a database connection pool exhausted by a misconfigured batch job.",
+      "quote": "a database connection pool was exhausted by a misconfigured batch job",
+      "computation": null,
+      "ground_truth_category": "wrong_attribution",
+      "groundswarm_verdict": "rejected",
+      "groundswarm_method": "deterministic",
+      "groundswarm_reason": "quote does not appear in the source text, invented or altered"
+    },
+    {
+      "worker_id": "ground_truth_11",
+      "source": "cobalt_storage_postmortem.txt",
+      "text": "Cobalt Storage's degraded-node incident lasted 61 minutes end to end.",
+      "quote": null,
+      "computation": {
+        "operation": "duration_minutes",
+        "operands": [
+          {
+            "value": "02:50",
+            "quote": "Starting at 02:50 UTC on 2026-07-29"
+          },
+          {
+            "value": "03:41",
+            "quote": "drained from the read path at 03:41 UTC"
+          }
+        ],
+        "result": 61.0
+      },
+      "ground_truth_category": "incorrect_computation",
+      "groundswarm_verdict": "rejected",
+      "groundswarm_method": "computation",
+      "groundswarm_reason": "recomputed duration_minutes = 51, but claim asserts 61.0"
+    },
+    {
+      "worker_id": "ground_truth_12",
+      "source": "meridian_cache_postmortem.txt",
+      "text": "No customer data was exposed or corrupted during Meridian Cache's stale-content incident.",
+      "quote": "No customer data was exposed or corrupted",
+      "computation": null,
+      "ground_truth_category": "supported",
+      "groundswarm_verdict": "confirmed",
+      "groundswarm_method": "deterministic",
+      "groundswarm_reason": "quote round-trips into the live-refetched source"
+    },
+    {
+      "worker_id": "ground_truth_13",
+      "source": "meridian_cache_postmortem.txt",
+      "text": "27 minutes elapsed from the start of Meridian Cache's incident to full cache freshness being restored.",
+      "quote": null,
+      "computation": {
+        "operation": "duration_minutes",
+        "operands": [
+          {
+            "value": "03:14",
+            "quote": "Starting at 03:14 UTC on 2026-05-11"
+          },
+          {
+            "value": "03:41",
+            "quote": "Full cache freshness was restored by 03:41 UTC"
+          }
+        ],
+        "result": 27.0
+      },
+      "ground_truth_category": "supported",
+      "groundswarm_verdict": "confirmed",
+      "groundswarm_method": "computation",
+      "groundswarm_reason": "recomputed duration_minutes = 27, matches claimed 27.0"
+    },
+    {
+      "worker_id": "ground_truth_14",
+      "source": "meridian_cache_postmortem.txt",
+      "text": "Meridian Cache's stale-content incident caused several customer purchase transactions to be double-charged.",
+      "quote": null,
+      "computation": null,
+      "ground_truth_category": "unsupported",
+      "groundswarm_verdict": "rejected",
+      "groundswarm_method": "llm_judge",
+      "groundswarm_reason": "The claim that the Meridian Cache's stale-content incident caused several customer purchase transactions to be double-charged is not supported by the source text."
+    },
+    {
+      "worker_id": "ground_truth_15",
+      "source": "meridian_cache_postmortem.txt",
+      "text": "The message broker involved in the partition rebalance was running a version several minor releases behind current.",
+      "quote": null,
+      "computation": null,
+      "ground_truth_category": "unverifiable",
+      "groundswarm_verdict": "rejected",
+      "groundswarm_method": "llm_judge",
+      "groundswarm_reason": "There is no mention in the source text that the message broker was running an outdated version."
+    },
+    {
+      "worker_id": "ground_truth_16",
+      "source": "meridian_cache_postmortem.txt",
+      "text": "Meridian Cache's consumer lag grew to approximately 340,000 unacknowledged messages at peak.",
+      "quote": "Consumer lag grew to approximately 340,000 unacknowledged messages at peak",
+      "computation": null,
+      "ground_truth_category": "wrong_attribution",
+      "groundswarm_verdict": "rejected",
+      "groundswarm_method": "deterministic",
+      "groundswarm_reason": "quote does not appear in the source text, invented or altered"
+    },
+    {
+      "worker_id": "ground_truth_17",
+      "source": "meridian_cache_postmortem.txt",
+      "text": "15 minutes elapsed between Meridian Cache's incident being detected and the broker partition being rebalanced.",
+      "quote": null,
+      "computation": {
+        "operation": "duration_minutes",
+        "operands": [
+          {
+            "value": "03:22",
+            "quote": "detected by an automated staleness monitor at 03:22 UTC"
+          },
+          {
+            "value": "03:27",
+            "quote": "the broker partition was manually rebalanced at 03:27 UTC"
+          }
+        ],
+        "result": 15.0
+      },
+      "ground_truth_category": "incorrect_computation",
+      "groundswarm_verdict": "rejected",
+      "groundswarm_method": "computation",
+      "groundswarm_reason": "recomputed duration_minutes = 5, but claim asserts 15.0"
+    },
+    {
+      "worker_id": "ground_truth_18",
+      "source": "ridgeline_auth_postmortem.txt",
+      "text": "Users with still-valid access tokens were not logged out during Ridgeline Auth's incident.",
+      "quote": "users with still-valid access tokens were not logged out",
+      "computation": null,
+      "ground_truth_category": "supported",
+      "groundswarm_verdict": "confirmed",
+      "groundswarm_method": "deterministic",
+      "groundswarm_reason": "quote round-trips into the live-refetched source"
+    },
+    {
+      "worker_id": "ground_truth_19",
+      "source": "ridgeline_auth_postmortem.txt",
+      "text": "3 minutes elapsed between Ridgeline Auth's pool-saturation alert and the offending batch job being killed.",
+      "quote": null,
+      "computation": {
+        "operation": "duration_minutes",
+        "operands": [
+          {
+            "value": "20:11",
+            "quote": "identified via connection-pool saturation alerts at 20:11 UTC"
+          },
+          {
+            "value": "20:14",
+            "quote": "killed at 20:14 UTC"
+          }
+        ],
+        "result": 3.0
+      },
+      "ground_truth_category": "supported",
+      "groundswarm_verdict": "confirmed",
+      "groundswarm_method": "computation",
+      "groundswarm_reason": "recomputed duration_minutes = 3, matches claimed 3.0"
+    },
+    {
+      "worker_id": "ground_truth_20",
+      "source": "ridgeline_auth_postmortem.txt",
+      "text": "Ridgeline Auth's connection pool exhaustion exposed session tokens for affected users in server logs.",
+      "quote": null,
+      "computation": null,
+      "ground_truth_category": "unsupported",
+      "groundswarm_verdict": "rejected",
+      "groundswarm_method": "llm_judge",
+      "groundswarm_reason": "The source states that no credentials or session data were exposed."
+    },
+    {
+      "worker_id": "ground_truth_21",
+      "source": "ridgeline_auth_postmortem.txt",
+      "text": "The misconfigured batch job had been deployed earlier that same day.",
+      "quote": null,
+      "computation": null,
+      "ground_truth_category": "unverifiable",
+      "groundswarm_verdict": "rejected",
+      "groundswarm_method": "llm_judge",
+      "groundswarm_reason": "No information in the source about the deployment time of the misconfigured batch job."
+    },
+    {
+      "worker_id": "ground_truth_22",
+      "source": "ridgeline_auth_postmortem.txt",
+      "text": "Ridgeline Auth's renewal failure was traced to an expired API token used by the certificate-renewal automation.",
+      "quote": "traced to an expired API token used by the certificate-renewal automation",
+      "computation": null,
+      "ground_truth_category": "wrong_attribution",
+      "groundswarm_verdict": "rejected",
+      "groundswarm_method": "deterministic",
+      "groundswarm_reason": "quote does not appear in the source text, invented or altered"
+    },
+    {
+      "worker_id": "ground_truth_23",
+      "source": "ridgeline_auth_postmortem.txt",
+      "text": "Ridgeline Auth's session-refresh incident lasted 22 minutes from onset to the batch job being killed.",
+      "quote": null,
+      "computation": {
+        "operation": "duration_minutes",
+        "operands": [
+          {
+            "value": "20:02",
+            "quote": "At 20:02 UTC on 2026-07-15"
+          },
+          {
+            "value": "20:14",
+            "quote": "killed at 20:14 UTC"
+          }
+        ],
+        "result": 22.0
+      },
+      "ground_truth_category": "incorrect_computation",
+      "groundswarm_verdict": "rejected",
+      "groundswarm_method": "computation",
+      "groundswarm_reason": "recomputed duration_minutes = 12, but claim asserts 22.0"
+    },
+    {
+      "worker_id": "ground_truth_24",
+      "source": "solace_queue_postmortem.txt",
+      "text": "No messages were dropped during Solace Queue's consumer-lag incident, and the retention window was never approached.",
+      "quote": "No messages were dropped; the queue's retention window of 72 hours was never approached",
+      "computation": null,
+      "ground_truth_category": "supported",
+      "groundswarm_verdict": "confirmed",
+      "groundswarm_method": "deterministic",
+      "groundswarm_reason": "quote round-trips into the live-refetched source"
+    },
+    {
+      "worker_id": "ground_truth_25",
+      "source": "solace_queue_postmortem.txt",
+      "text": "8 minutes elapsed between Solace Queue detecting the slow receiver and throttling the partner's webhook concurrency.",
+      "quote": null,
+      "computation": {
+        "operation": "duration_minutes",
+        "operands": [
+          {
+            "value": "12:03",
+            "quote": "identified the slow receiver via consumer-lag alerting at 12:03 UTC"
+          },
+          {
+            "value": "12:11",
+            "quote": "throttled the specific partner's webhook concurrency at 12:11 UTC"
+          }
+        ],
+        "result": 8.0
+      },
+      "ground_truth_category": "supported",
+      "groundswarm_verdict": "confirmed",
+      "groundswarm_method": "computation",
+      "groundswarm_reason": "recomputed duration_minutes = 8, matches claimed 8.0"
+    },
+    {
+      "worker_id": "ground_truth_26",
+      "source": "solace_queue_postmortem.txt",
+      "text": "Solace Queue's order-events backlog caused permanent loss of approximately 12,000 messages.",
+      "quote": null,
+      "computation": null,
+      "ground_truth_category": "unsupported",
+      "groundswarm_verdict": "rejected",
+      "groundswarm_method": "llm_judge",
+      "groundswarm_reason": "The source states that no messages were dropped."
+    },
+    {
+      "worker_id": "ground_truth_27",
+      "source": "solace_queue_postmortem.txt",
+      "text": "The partner integration responsible for the slow webhook receiver has since been suspended from the platform.",
+      "quote": null,
+      "computation": null,
+      "ground_truth_category": "unverifiable",
+      "groundswarm_verdict": "rejected",
+      "groundswarm_method": "llm_judge",
+      "groundswarm_reason": "The source text does not mention the partner integration responsible for the slow webhook receiver being suspended."
+    },
+    {
+      "worker_id": "ground_truth_28",
+      "source": "solace_queue_postmortem.txt",
+      "text": "Solace Queue's degraded disk was replaced during a maintenance window the same day.",
+      "quote": "the physical disk was replaced during a maintenance window the same day",
+      "computation": null,
+      "ground_truth_category": "wrong_attribution",
+      "groundswarm_verdict": "rejected",
+      "groundswarm_method": "deterministic",
+      "groundswarm_reason": "quote does not appear in the source text, invented or altered"
+    },
+    {
+      "worker_id": "ground_truth_29",
+      "source": "solace_queue_postmortem.txt",
+      "text": "Solace Queue's backlog took 57 minutes to drain from onset to full completion.",
+      "quote": null,
+      "computation": {
+        "operation": "duration_minutes",
+        "operands": [
+          {
+            "value": "11:45",
+            "quote": "Beginning at 11:45 UTC on 2026-07-03"
+          },
+          {
+            "value": "12:52",
+            "quote": "Full backlog drain completed at 12:52 UTC"
+          }
+        ],
+        "result": 57.0
+      },
+      "ground_truth_category": "incorrect_computation",
+      "groundswarm_verdict": "rejected",
+      "groundswarm_method": "computation",
+      "groundswarm_reason": "recomputed duration_minutes = 67, but claim asserts 57.0"
+    }
+  ]
+}

@@ -35,7 +35,7 @@
 <div class="wrap">
 
 <h1>Groundswarm — Project Hub</h1>
-<div class="dim">Open source &middot; early / architecture &amp; research phase &middot; last updated 2026-08-13</div>
+<div class="dim">Open source &middot; early / architecture &amp; research phase &middot; last updated 2026-08-18</div>
 
 <div class="lead">
 A swarm of OpenClaw-based agents, coordinated by a new orchestrator, whose combined output is
@@ -56,7 +56,31 @@ company work, <code>Copyright 2026 Pankh-AI</code>, under an existing Pankh-AI G
 decision remains open: confirmation of the first proof-case domain. A fourth component, Memory, a
 scoped and verified shared knowledge store, has been added to the architecture (ADR-007), checked
 against 9 agent-memory products and 2 research proposals, and confirmed as a genuine, unaddressed
-gap, not yet built. See <a href="./decisions/adr-index.html">decisions</a>.
+gap, not yet built. See <a href="./decisions/adr-index.html">decisions</a>. Product pivot underway
+2026-08-15: open-source SDK/framework first, config/YAML-based swarm definition, no UI for v1 &mdash;
+schema designed, loader not yet written. The Move-2 "Verified Beats Plausible" benchmark, run as a
+parallel, non-gating workstream, now has a <b class="good">measured result</b> (2026-08-16, ADR-017):
+verification catches 39/40 injected bad claims across two live runs at zero false-rejection cost, both
+unverified baselines leak 40/40. See <a href="./ops/move2-results.html">Move 2 results</a>. The
+N-worker scale sweep was also extended to N=200 (2026-08-16) against a live remote endpoint, finding
+and fixing a second real crash-class bug (a worker echoing prompt schema text into the
+<code>quote</code> field as a dict); fail-closed held with zero false confirms on the clean re-run.
+See <a href="./ops/nworker-scale-sweep.html">N-worker sweep</a>. OpenClaw integration re-architected
+2026-08-17 (ADR-018, supersedes ADR-001): cloning and reading OpenClaw's real source showed it's a
+single always-on Gateway daemon, not a spawn-per-worker binary, so Groundswarm now manages the
+Gateway's full lifecycle and dispatches through its real agent-backed chat-completions endpoint. First
+live smoke test <b class="good">passed</b>: 3 source-grounded claims through a genuine agent turn on
+local Ollama, after finding and fixing two real OpenClaw-side bugs. See
+<a href="./ops/openclaw-integration.html">OpenClaw Gateway integration</a>. The verification-outcome
+feedback loop is now <b class="good">built and run live</b> (2026-08-18, ADR-019): a full 5-worker
+pipeline run through the real Gateway (27 claims, 18 confirmed) flagged its worst performer and
+re-dispatched it with a caution note generated from the Verifier's own tally. The first version of
+that re-dispatch came back byte-for-byte identical to the original &mdash; root-caused, by reading the
+Gateway's own log, to same-session reuse anchoring the agent on repeating its first answer, not to the
+prompt content. Fixed by giving each dispatch attempt its own Gateway session; the in-product re-run
+then showed a genuinely different response and confirmed claims went 0/4 &rarr; 3/3, with the honest
+caveat that isolating the caution note's own effect from fresh-session sampling variance is still open,
+scoped as follow-up. See <a href="./ops/openclaw-feedback-loop.html">OpenClaw feedback loop</a>.
 </div>
 
 <h2>Artifacts</h2>
@@ -71,9 +95,23 @@ const artifacts = [
   {area:"Research", type:"Survey",     title:"Similar Projects & Name Check — swarm-scale and verification research don't overlap yet; \"Groundswarm\" comes back clear on GitHub/npm/PyPI/DNS", path:"./research/similar-projects.html", status:"Active"},
   {area:"Research", type:"Survey",     title:"Memory Landscape — 9 agent-memory products + 2 papers checked; none combine validity scoping, a deterministic gate, tiered loading, and TTL/supersedes. Mem0 and Zep both lean on an LLM for conflict resolution and score 18% / 7% on a fact-conflict benchmark", path:"./research/memory-landscape.html", status:"Active"},
   {area:"Strategy", type:"Analysis",   title:"SWOT — sourced positioning synthesis from the literature, market, and memory-landscape surveys, nothing generic", path:"./strategy/swot.html", status:"Active"},
-  {area:"Decisions", type:"ADR Log",   title:"Decisions — OpenClaw as worker runtime, the Groundswarm name, Apache-2.0 open-core licensing, Python for the orchestrator/verifier, Memory as a fourth component (confirmed gap), Pankh-AI as copyright holder and publishing org, and one still-open item", path:"./decisions/adr-index.html", status:"Active"},
+  {area:"Decisions", type:"ADR Log",   title:"Decisions — OpenClaw as worker runtime, the Groundswarm name, Apache-2.0 open-core licensing, Python for the orchestrator/verifier, Memory as a fourth component, Pankh-AI as publisher, a third computation-based verification method (ADR-009), the re-run→benchmark→Memory sequencing and V0.2 \"Verified Beats Plausible\" milestone (ADR-010/011/012), the measured Move-1 re-validation result (ADR-013), the deterministic prompt A/B confirming the anti-echo fix (ADR-014), the completed 1x&ndash;200x N-worker sweep that found and fixed two real batch-crashing bugs (ADR-015), the product pivot to OSS SDK/framework-first with a config/YAML swarm surface (ADR-016), the measured Move-2 result — verification catches 39/40 injected bad claims at zero false-rejection cost (ADR-017), the ADR-001-superseding merge with OpenClaw's Gateway — built and measured, not just decided (ADR-018), the feedback loop built and run live — a same-session anchoring bug found, root-caused, and fixed (ADR-019), and one still-open item", path:"./decisions/adr-index.html", status:"Active"},
   {area:"Caveats",   type:"Limitations", title:"Limitations — no benchmark yet validates the core bet, fail-closed judging is confirmed hard not solved, trademark clearance is informal, Memory is a confirmed gap not proven code, GitHub cross-check deliberately deferred", path:"./caveats/limitations.html", status:"Active"},
   {area:"Audit",     type:"Log",       title:"Research Audit Log — every agent run: model, tool calls, duration, tokens, and what was deliberately not researched and why", path:"./audit/research-log.html", status:"Active"},
+  {area:"Ops",       type:"Observability", title:"Observability — incident_monitoring scenario (2 workers): real per-call token counts and latency from OllamaClient itself, broken down by extraction/synthesis/judge phase", path:"./ops/observability.html", status:"Active"},
+  {area:"Ops",       type:"Observability", title:"Observability — 5-worker swarm run: judge-path cost isn't predictable per claim, and now with real perplexity per call — structured extraction/judge calls run ~1.2-1.5, free-form synthesis ~5.9", path:"./ops/observability-swarm.html", status:"Active"},
+  {area:"Ops",       type:"Observability", title:"Observability — 55-worker swarm run, pre-fix baseline (234 claims): 29 of 229 real claims REJECTED (raw 12.7%), all 5 injected fabrications caught — first run large enough to surface the swarm's own extraction error rate at volume. Superseded as the live report by the post-fix re-run; see Move 1 re-validation", path:"./ops/observability-swarm55.html", status:"Active"},
+  {area:"Ops",       type:"Analysis",       title:"Rejection Analysis — pre-fix baseline: all 29 real-claim rejections read individually and checked against source: 27 are quote-formatting artifacts (ellipsis, splice, schema-echo) on TRUE claims, only 2 are genuine content errors — true accuracy is ~99.1%, not the raw 87.3% confirm rate", path:"./ops/rejection-analysis.html", status:"Active"},
+  {area:"Ops",       type:"Analysis",       title:"Move 1 Re-validation — post-fix 55-worker re-run: crash-safety and the new arithmetic check both confirmed live (a real crash found, fixed, and regression-tested along the way), but raw rejection rate rose 12.7%→33.1% because the quote-paraphrasing problem persists and the model now also misuses the new computation field — not a drop in factual accuracy, read individually against source", path:"./ops/move1-revalidation.html", status:"Active"},
+  {area:"Ops",       type:"Analysis",       title:"Deterministic Prompt A/B — temp=0 paired comparison (Colab-hosted GPU Ollama) isolates the ADR-009 fix from sampling noise: the schema-echo placeholder bug reproduces on 2/5 sources under the old prompt and is gone from all 10 new-prompt claims, at the cost of a real recall regression and one internally-inconsistent computation on a true claim", path:"./ops/prompt-ab-move2.html", status:"Active"},
+  {area:"Ops",       type:"Analysis",       title:"N-Worker Scale Sweep — 1x/5x/20x/100x/200x all run clean: N=20 crashed on an uncaught network timeout (per-call fail-closed + a Colab stdout-pipe-deadlock fix); N=200 crashed on a worker echoing prompt schema text as a dict key into the quote field (str()-coercion fix, matching the existing computation-operand pattern); both fixed live and regression-tested, fail-closed never slipped once across 746 real claims at the largest scale", path:"./ops/nworker-scale-sweep.html", status:"Active"},
+  {area:"Research", type:"Survey",     title:"OSS Packaging & Monetization Landscape — declarative-config packaging splits roughly evenly across 8 comparable frameworks (swarms/CrewAI real, AutoGen side-app-only, 5 code-only); open-core monetization needs far fewer stars than intuition suggests (PostHog 2.8k, Airbyte 5k) but tracks workload trust bar; nothing found combines declarative swarm config with independent live-source verification", path:"./research/oss-packaging-landscape.html", status:"Active"},
+  {area:"Research", type:"Survey",     title:"YAML Schema Design Precedent — docker-compose, GitHub Actions' permissions block, dbt sources/tests, Kubernetes CRD/OPA Gatekeeper, and 6 agent-orchestration export formats read from source; Gatekeeper's ConstraintTemplate/Constraint split and dbt's per-column tests are the closest transferable precedent for Groundswarm's verification-rule shape", path:"./research/yaml-schema-precedent.html", status:"Active"},
+  {area:"Product",   type:"Spec",       title:"Swarm Definition Schema (v1) — config/YAML surface for defining a swarm: sources/workers/verification as three unit types mapped 1:1 onto existing WorkerTask/Orchestrator/Verifier code, fields marked real vs. reserved rather than overclaiming, fail-closed-at-load-time for unresolved source references", path:"./product/swarm-schema.html", status:"Active"},
+  {area:"Ops",       type:"Observability", title:"Observability — Move 2 benchmark run (groundswarm vs. swarm_no_verification vs. single_agent): real per-call token counts and latency from OllamaClient itself, against a remote ngrok-tunneled dolphin3:latest", path:"./ops/move2-benchmark.html", status:"Active"},
+  {area:"Ops",       type:"Analysis",       title:"Move 2 Results — the measured \"Verified Beats Plausible\" comparison: groundswarm catches 39/40 injected bad claims across two live runs at zero false-rejection cost, both unverified conditions leak 40/40; reading real claims individually surfaces a live EVIDENCE_VALID-vs-CLAIM_VALID instance and a systematic negative-fact omission gap unrelated to verification", path:"./ops/move2-results.html", status:"Active"},
+  {area:"Ops",       type:"Integration",    title:"OpenClaw Gateway Integration — ADR-018 built and measured: Groundswarm now owns the OpenClaw Gateway's full lifecycle and dispatches through its real agent-backed chat-completions endpoint; first live smoke test returned 3 source-grounded claims through a genuine agent turn on local Ollama, after root-causing and fixing an implicit OpenAI-to-Codex-harness routing default and a silent Ollama model-discovery gate", path:"./ops/openclaw-integration.html", status:"Active"},
+  {area:"Ops",       type:"Integration",    title:"OpenClaw Feedback Loop — ADR-019 built and measured: the Verifier's own output now reshapes a flagged worker's next real-Gateway dispatch; the first cautioned re-dispatch came back byte-for-byte identical to the original, root-caused by reading the Gateway's own log to same-session anchoring rather than guessed at, fixed with a session per attempt, and re-validated in situ (0/4 → 3/3 confirmed) with an explicit, unresolved caveat on isolating the note's own effect from fresh-session sampling variance", path:"./ops/openclaw-feedback-loop.html", status:"Active"},
 ];
 
 const tbody = document.querySelector('#reg tbody');

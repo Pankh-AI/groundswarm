@@ -1,0 +1,187 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Groundswarm — Swarm Definition Schema (v1)</title>
+<style>
+  :root{--bg:#0f1115;--fg:#e6e9ef;--dim:#98a2b3;--card:#171a21;--line:#252a34;
+        --good:#3fb950;--bad:#f85149;--warn:#d29922;--acc:#58a6ff}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--fg);
+       font:15px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+  .wrap{max-width:1080px;margin:0 auto;padding:28px 20px 80px}
+  h1{font-size:24px;margin:0 0 4px} h2{font-size:18px;margin:32px 0 10px;color:var(--acc)}
+  h3{font-size:14.5px;margin:18px 0 6px;color:var(--fg)}
+  .dim{color:var(--dim)} .small{font-size:13px}
+  .lead{font-size:15.5px;border-left:3px solid var(--acc);padding-left:14px;margin:16px 0}
+  code{background:#0b0d11;padding:1px 5px;border-radius:4px;font-size:13px}
+  pre{background:#0b0d11;border:1px solid var(--line);border-radius:8px;padding:12px 14px;
+      overflow-x:auto;font-size:12.5px;line-height:1.55;color:#c9d1d9}
+  a{color:var(--acc)}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:16px 18px;margin:14px 0}
+  .src{font-size:13px;color:var(--dim)}
+  .back{font-size:13px;margin-bottom:18px;display:inline-block}
+  .tag{display:inline-block;padding:2px 8px;border-radius:99px;font-size:11.5px;font-weight:700}
+  .t-real{background:#123018;color:var(--good)} .t-reserved{background:#33280a;color:var(--warn)}
+  ol,ul{margin:8px 0;padding-left:22px}
+  li{margin:6px 0}
+  .cmt{color:#6b7280}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<a class="back" href="../index.html">&larr; Groundswarm hub</a>
+<h1>Swarm Definition Schema (v1)</h1>
+<div class="dim">Product surface decision &middot; 2026-08-15 &middot; my own design call, grounded in
+<a href="../research/yaml-schema-precedent.html">schema precedent research</a> and
+<a href="../research/oss-packaging-landscape.html">packaging landscape research</a>, not delegated to
+either research pass</div>
+
+<div class="lead">
+Per the user's confirmed direction: config/YAML-based, no UI for v1, technical users first. This page
+defines the actual YAML shape a Groundswarm user writes to declare a swarm &mdash; three unit types
+(<b>sources</b>, <b>workers</b>, <b>verification</b>), matching the three real components that already
+exist in code (<code>WorkerTask</code>/<code>Claim</code>, the <code>Orchestrator</code>, the
+<code>Verifier</code>) rather than inventing capability the codebase doesn't have yet. Fields are marked
+<span class="tag t-real">real</span> where they map directly onto existing, tested code paths, and
+<span class="tag t-reserved">reserved</span> where the field is defined now for forward compatibility but
+not yet enforced &mdash; stated explicitly rather than left ambiguous, consistent with this project's
+existing no-inflated-claims discipline.
+</div>
+
+<h2>The schema</h2>
+<pre>groundswarm: 1                        <span class="cmt"># schema generation, dbt-style (not semver) -- bump only on a breaking field-shape change</span>
+
+swarm:
+  name: incident-monitoring-demo
+  instruction: "Extract the key findings from this incident postmortem."  <span class="cmt"># default WorkerTask.instruction for every worker below</span>
+
+sources:                               <span class="cmt"># named once, referenced by workers -- Compose-style reference-by-name,</span>
+  anchor_cdn:                          <span class="cmt"># not a path repeated inline at every worker that touches it</span>
+    type: file                         <span class="cmt"># only implemented value today -- see caveats</span>
+    path: ./sources/anchor_cdn_postmortem.txt
+  cobalt_storage:
+    type: file
+    path: ./sources/cobalt_storage_postmortem.txt
+
+workers:                               <span class="cmt"># a list, not a map: worker_id can repeat a source (the N-worker sweep's</span>
+  - id: anchor_cdn_w1                  <span class="cmt"># "_r2" repeat-worker pattern needs list semantics, a map key can't repeat)</span>
+    source: anchor_cdn                 <span class="cmt"># must resolve to a key under sources: -- unresolved reference is a load-time error, see below</span>
+    # instruction: ...                 <span class="cmt"># optional per-worker override of swarm.instruction</span>
+
+  - id: cobalt_storage_w1
+    source: cobalt_storage
+
+verification:
+  quote_match: enabled                 <span class="cmt"># deterministic; cannot be disabled -- listed for visibility, not control</span>
+  arithmetic: enabled                  <span class="cmt"># deterministic; cannot be disabled -- listed for visibility, not control</span>
+  llm_judge:
+    enabled: true                      <span class="cmt"># RESERVED: toggle defined here, Verifier doesn't read it yet -- see caveats</span>
+    model: dolphin3:latest
+
+runtime:
+  ollama_host: ${OLLAMA_HOST}          <span class="cmt"># Compose-style ${VAR} interpolation, not a code edit</span>
+  model: dolphin3:latest</pre>
+
+<h2>Field-by-field: real vs. reserved</h2>
+<table style="width:100%;border-collapse:collapse;font-size:13.5px;margin:10px 0">
+<thead><tr><th style="text-align:left;color:var(--dim);padding:8px 9px;border-bottom:1px solid var(--line)">Field</th>
+<th style="text-align:left;color:var(--dim);padding:8px 9px;border-bottom:1px solid var(--line)">Status</th>
+<th style="text-align:left;color:var(--dim);padding:8px 9px;border-bottom:1px solid var(--line)">Maps to</th></tr></thead>
+<tbody>
+<tr><td style="padding:8px 9px;border-bottom:1px solid var(--line)"><code>sources.*.path</code>, <code>workers[].source</code>, <code>workers[].id</code></td>
+<td style="padding:8px 9px;border-bottom:1px solid var(--line)"><span class="tag t-real">real</span></td>
+<td style="padding:8px 9px;border-bottom:1px solid var(--line)"><code>WorkerTask.source_path</code> / <code>.worker_id</code> directly</td></tr>
+<tr><td style="padding:8px 9px;border-bottom:1px solid var(--line)"><code>swarm.instruction</code>, per-worker override</td>
+<td style="padding:8px 9px;border-bottom:1px solid var(--line)"><span class="tag t-real">real</span></td>
+<td style="padding:8px 9px;border-bottom:1px solid var(--line)"><code>WorkerTask.instruction</code> &mdash; today hardcoded identically in every scenario script</td></tr>
+<tr><td style="padding:8px 9px;border-bottom:1px solid var(--line)"><code>runtime.ollama_host</code>, <code>runtime.model</code></td>
+<td style="padding:8px 9px;border-bottom:1px solid var(--line)"><span class="tag t-real">real</span></td>
+<td style="padding:8px 9px;border-bottom:1px solid var(--line)"><code>OllamaClient(host=, model=)</code> constructor args, already env-var-driven today</td></tr>
+<tr><td style="padding:8px 9px;border-bottom:1px solid var(--line)"><code>verification.quote_match</code>, <code>.arithmetic</code></td>
+<td style="padding:8px 9px;border-bottom:1px solid var(--line)"><span class="tag t-reserved">reserved</span></td>
+<td style="padding:8px 9px;border-bottom:1px solid var(--line)">always-on in <code>Verifier.verify_claim()</code>; schema field is documentation, no code reads it, and per fail-closed philosophy it never will be a real off-switch</td></tr>
+<tr><td style="padding:8px 9px;border-bottom:1px solid var(--line)"><code>verification.llm_judge.enabled</code></td>
+<td style="padding:8px 9px;border-bottom:1px solid var(--line)"><span class="tag t-reserved">reserved</span></td>
+<td style="padding:8px 9px;border-bottom:1px solid var(--line)">would let a swarm author route any claim with neither quote nor computation straight to <code>unverified</code> instead of the LLM fallback -- a real, small, buildable change to <code>Verifier._judge()</code>'s call site, not yet made</td></tr>
+<tr><td style="padding:8px 9px;border-bottom:1px solid var(--line)"><code>sources.*.type</code> other than <code>file</code></td>
+<td style="padding:8px 9px;border-bottom:1px solid var(--line)"><span class="tag t-reserved">reserved</span></td>
+<td style="padding:8px 9px;border-bottom:1px solid var(--line)"><code>WorkerTask.source_path</code>'s own docstring: "a local fixture standing in for a live primary source during simulation" -- no live-fetch source type exists in code yet, <code>type: file</code> is the only value the (not-yet-written) loader would accept</td></tr>
+</tbody>
+</table>
+<div class="card small">
+None of this schema is parsed by any code yet either &mdash; the loader that turns this YAML into
+<code>WorkerTask</code>/<code>Orchestrator</code>/<code>Verifier</code> wiring is the concrete next
+engineering step this page sets up, not something this page claims already exists.
+</div>
+
+<h2>Design rationale</h2>
+<div class="card">
+<b>Three unit types, not one flat list.</b> Sources, workers, and verification are three genuinely
+different kinds of thing with different lifecycles: a source is a reference to data that may be reused by
+multiple workers; a worker is one extraction task bound to exactly one source; verification is a policy
+that applies to the claims workers produce, not to the workers themselves. Collapsing them into one flat
+list (the way a lot of no-code tools do) would force verification config to live duplicated on every
+worker instead of declared once.
+<h3>Why reference-by-name (Compose), not an explicit dependency graph (GitHub Actions' <code>needs:</code>)</h3>
+Groundswarm's actual data flow has no case today where one worker's output feeds another worker's
+<i>config</i> at parse time &mdash; each worker reads exactly one source and reports claims; synthesis
+reads every worker's claims, a pure fan-in, not a general DAG. GitHub's <code>needs:</code>/
+<code>outputs:</code> machinery solves a problem (arbitrary step-to-step data piping) Groundswarm doesn't
+have yet. If a real inter-worker dependency need shows up later, add it then &mdash; not speculatively now.
+<h3>Why verification is attached where it's declared (dbt), not one global permissions-style block (GitHub)</h3>
+GitHub's <code>permissions:</code> block is right for what it governs: ambient, workflow-wide defaults
+that every step inherits unless overridden. Groundswarm's verification methods aren't ambient defaults,
+they're mandatory, per-claim checks that already run unconditionally on every claim regardless of
+config &mdash; there's no scope in this codebase where "unlisted claim gets verified with a weaker
+default" is even a coherent state, because <code>Verifier.verify_claim()</code> has no notion of a claim
+with no applicable check (computation-or-quote-or-judge is a total function over every claim shape). The
+schema field that resembles GitHub's toggle (<code>llm_judge.enabled</code>) is scoped narrowly to which
+<i>fallback path</i> gets tried, never whether a claim gets checked at all.
+<h3>What the "unlisted permission" question actually resolves to here</h3>
+The precedent research flagged GitHub's all-or-nothing default-fill as a design question with no clean
+answer transferring in. Restated for this schema, the equivalent case is a config-<i>load-time</i> one,
+not a per-claim one: a worker whose <code>source:</code> doesn't resolve to any key under
+<code>sources:</code>. Consistent with the rest of this codebase's fail-closed doctrine (a malformed
+computation payload becomes <code>unverified</code>, never a guess), an unresolved source reference must
+be a hard validation error that refuses to run the swarm at all &mdash; not a silently-skipped worker and
+not a claim that quietly reports without a source. Fail closed at config load, the same way the Verifier
+already fails closed at claim-check time.
+<h3>Why no <code>version:</code>/<code>apiVersion:</code> per-file field, but a top-level <code>groundswarm: 1</code></h3>
+Compose's answer (no version discriminator, unknown fields warn and are ignored) is right for a mature,
+slowly-evolving spec with a large installed base of existing files a change can't break. Groundswarm v1
+has neither yet. dbt's per-resource <code>version: 2</code> is closer to right for an early, evolving
+schema: a single integer that bumps only when a field's shape changes in a way old files can't be
+auto-migrated from, giving the (not-yet-written) loader a clean way to say "this file predates a breaking
+change" without a semver negotiation.
+</div>
+
+<h2>What was deliberately left out of v1</h2>
+<div class="card">
+<ul>
+<li><b>Memory.</b> ADR-007 scoped Memory as a fourth architectural component, but it isn't built yet (see
+<a href="../decisions/adr-index.html">decisions</a>). Designing a schema for a subsystem that doesn't
+exist is exactly the kind of speculative-future-requirement design this project's own operating
+discipline avoids; a Memory schema block gets designed when Memory gets built, not before.</li>
+<li><b>A no-code visual builder.</b> Explicitly ruled out by the user's own direction for v1 &mdash;
+technical users, config/YAML-based, no UI.</li>
+<li><b>CrewAI's decorator-driven Python glue.</b> CrewAI's YAML pair still needs a
+<code>@CrewBase</code>-decorated Python entry point to actually run (see
+<a href="../research/oss-packaging-landscape.html">packaging landscape</a>). Groundswarm's target, closer
+to <code>swarms</code>' <code>run-agents --yaml-file</code>, is a YAML file plus one CLI invocation with
+zero required Python from the user &mdash; the loader is the only new code this implies, not a new
+authoring layer on top of the YAML.</li>
+<li><b>A Gatekeeper-style two-file template/instance split for verification rules.</b> Right shape for a
+large, open-ended set of rule types; overkill for the exactly-three, fixed-in-code rule types Groundswarm
+has today. Worth revisiting only if/when verification rule types become genuinely pluggable.</li>
+</ul>
+</div>
+
+<div class="src">Design by the coding agent working this session, grounded in the linked precedent and
+packaging research; not itself a research-agent output.</div>
+
+</div>
+</body>
+</html>

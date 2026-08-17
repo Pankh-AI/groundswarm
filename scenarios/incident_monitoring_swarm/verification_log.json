@@ -1,0 +1,1562 @@
+[
+  {
+    "worker_id": "meridian_cache_r1",
+    "source": "meridian_cache_postmortem.txt",
+    "text": "At the most recent incident, approximately 22% of requests received content that was older than the configured freshness window.",
+    "quote": "Approximately 22% of read requests during the incident window received content older than the configured 5-minute freshness window.",
+    "verdict": "confirmed",
+    "method": "deterministic",
+    "reason": "quote round-trips into the live-refetched source",
+    "is_injected_fabrication": false
+  },
+  {
+    "worker_id": "meridian_cache_r1",
+    "source": "meridian_cache_postmortem.txt",
+    "text": "",
+    "quote": null,
+    "verdict": "unverified",
+    "method": "fail_closed",
+    "reason": "computation payload malformed: 'quote'",
+    "is_injected_fabrication": false
+  },
+  {
+    "worker_id": "meridian_cache_r2",
+    "source": "meridian_cache_postmortem.txt",
+    "text": "No requests failed outright; all returned 200 OK with stale bodies.",
+    "quote": "\"2% of read requests during the incident window received content older than the configured 5-minute freshness window.",
+    "verdict": "rejected",
+    "method": "deterministic",
+    "reason": "quote does not appear in the source text, invented or altered",
+    "is_injected_fabrication": false
+  },
+  {
+    "worker_id": "meridian_cache_r2",
+    "source": "meridian_cache_postmortem.txt",
+    "text": "The backlog was caused by a message-broker partition rebalance that paused invalidation delivery for 11 minutes",
+    "quote": null,
+    "verdict": "rejected",
+    "method": "computation",
+    "reason": "operand 0 quote does not appear in the source text: '\"3:27 UTC'",
+    "is_injected_fabrication": false
+  },
+  {
+    "worker_id": "meridian_cache_r2",
+    "source": "meridian_cache_postmortem.txt",
+    "text": "Full cache freshness was restored by 03:41 UTC, a total incident duration of 27 minutes",
+    "quote": null,
+    "verdict": "rejected",
+    "method": "computation",
+    "reason": "operand 0 value 'Starting at 03:14 UTC on 2026-05-11,' does not appear within its own quote ''",
+    "is_injected_fabrication": false
+  },
+  {
+    "worker_id": "meridian_cache_r3",
+    "source": "meridian_cache_postmortem.txt",
+    "text": "Approximately 22% of read requests during the incident window received content older than the configured 5-minute freshness window.",
+    "quote": "Approximately 22% of read requests during the incident window received content older than the configured 5-minute freshness window.",
+    "verdict": "confirmed",
+    "method": "deterministic",
+    "reason": "quote round-trips into the live-refetched source",
+    "is_injected_fabrication": false
+  },
+  {
+    "worker_id": "meridian_cache_r3",
+    "source": "meridian_cache_postmortem.txt",
+    "text": "The incident lasted for a total of 27 minutes.",
+    "quote": "Full cache freshness was restored by 03:41 UTC, a total incident duration of 27 minutes.",
+    "verdict": "confirmed",
+    "method": "deterministic",
+    "reason": "quote round-trips into the live-refetched source",
+    "is_injected_fabrication": false
+  },
+  {
+    "worker_id": "meridian_cache_r3",
+    "source": "meridian_cache_postmortem.txt",
+    "text": "A dead-letter alert is being added if the invalidation-queue backlog exceeds 2 minutes, and the partition count will be increased from 6 to 12 to mitigate future incidents.",
+    "quote": null,
+    "verdict": "rejected",
+    "method": "computation",
+    "reason": "operand 0 value '6' does not appear within its own quote ''",
+    "is_injected_fabrication": false
+  },
+  {
+    "worker_id": "meridian_cache_r4",
+    "source": "meridian_cache_postmortem.txt",
+    "text": "No customer data was exposed or corrupted.",
+    "quote": "No customer data was exposed or corrupted.",
+    "verdict": "confirmed",
+    "method": "deterministic",
+    "reason": "quote round-trips into the live-refetched source",
+    "is_injected_fabrication": false
+  },
+  {
+    "worker_id": "meridian_cache_r4",
+    "source": "meridian_cache_postmortem.txt",
+    "text": "The total incident lasted for 27 minutes.",
+    "quote": null,
+    "verdict": "unverified",
+    "method": "fail_closed",
+    "reason": "computation payload malformed: 'quote'",
+    "is_injected_fabrication": false
+  },
+  {
+    "worker_id": "meridian_cache_r5",
+    "source": "meridian_cache_postmortem.txt",
+    "text": "Approximately 22% of read requests during the incident window received content older than the configured 5-minute freshness window.",
+    "quote": "Approximately 22% of read requests during the incident window received content older than the configured 5-minute freshness window.",
+    "verdict": "confirmed",
+    "method": "deterministic",
+    "reason": "quote round-trips into the live-refetched source",
+    "is_injected_fabrication": false
+  },
+  {
+    "worker_id": "meridian_cache_r5",
+    "source": "meridian_cache_postmortem.txt",
+    "text": "The backlog was caused by a message-broker partition rebalance that paused invalidation delivery for 11 minutes.",
+    "quote": null,
+    "verdict": "rejected",
+    "method": "computation",
+    "reason": "operand 0 value 'message-broker partition rebalance occurred' does not appear within its own quote 'The backlog was caused by a message-broker partition rebalance that paused invalidation delivery for 11 minutes.'",
+    "is_injected_fabrication": false
+  },
+  {
+    "worker_id": "meridian_cache_r5",
+    "source": "meridian_cache_postmortem.txt",
+    "text": "The incident was detected by an automated staleness monitor at 03:22 UTC and the broker partition was manually rebalanced at 03:27 UTC.",
+    "quote": null,
+    "verdict": "confirmed",
+    "method": "llm_judge",
+    "reason": "The source text clearly states that the incident was detected by an automated staleness monitor at 03:22 UTC and the broker partition was manually rebalanced at 03:27 UTC.",
+    "is_injected_fabrication": false
+  },
+  {
+    "worker_id": "meridian_cache_r5",
+    "source": "meridian_cache_postmortem.txt",
+    "text": "Full cache freshness was restored by 03:41 UTC, a total incident duration of 27 minutes.",
+    "quote": "Full cache freshness was restored by 03:41 UTC. Incident duration was 27 minutes.",
+    "verdict": "rejected",
+    "method": "deterministic",
+    "reason": "quote does not appear in the source text, invented or altered",
+    "is_injected_fabrication": false
+  },
+  {
+    "worker_id": "meridian_cache_r6",
+    "source": "meridian_cache_postmortem.txt",
+    "text": "The incident lasted 27 minutes.",
+    "quote": "Full cache freshness was restored by 03:41 UTC, a total incident duration of 27 minutes.",
+    "verdict": "confirmed",
+    "method": "deterministic",
+    "reason": "quote round-trips into the live-refetched source",
+    "is_injected_fabrication": false
+  },
+  {
+    "worker_id": "meridian_cache_r6",
+    "source": "meridian_cache_postmortem.txt",
+    "text": "The backlog was caused by message-broker partition rebalance that paused invalidation delivery for 11 minutes.",
+    "quote": "The backlog was caused by a message-broker partition rebalance that paused invalidation delivery for 11 minutes.",
+    "verdict": "confirmed",
+    "method": "deterministic",
+    "reason": "quote round-trips into the live-refetched source",
+    "is_injected_fabrication": false
+  },
+  {
+    "worker_id": "meridian_cache_r6",
+    "source": "meridian_cache_postmortem.txt",
+    "text": "Approximately 22% of read requests received content older than the configured 5-minute freshness window.",
+    "quote": "Approximately 22% of read requests during the incident window received content older than the configured 5-minute freshness window.",
+    "verdict": "confirmed",
+    "method": "deterministic",
+    "reason": "quote round-trips into the live-refetched source",
+    "is_injected_fabrication": false
+  },
+  {
+    "worker_id": "meridian_cache_r7",
+    "source": "meridian_cache_postmortem.txt",
+    "text": "The incident occurred in the ap-south-1 region.",
+    "quote": "Meridian Cache's edge nodes in the ap-south-1 region began serving stale content",
+    "verdict": "confirmed",
+    "method": "deterministic",
+    "reason": "quote round-trips into the live-refetched source",
+    "is_injected_fabrication": false
+  },
+  {
+    "worker_id": "meridian_cache_r7",
+    "source": "meridian_cache_postmortem.txt",
+    "text": "The stale content was due to a cache-invalidation message backlog.",
+    "quote": "cache-invalidation message backlog",
+    "verdict": "confirmed",
+    "method": "deterministic",
+    "reason": "quote round-trips into the live-refetched source",
+    "is_injected_fabrication": false
+  },
+  {
+    "worker_id": "meridian_cache_r7",
+    "source": "meridian_cache_postmortem.txt",
+    "text": "Approximately 22% of read requests received content older than the configured freshness window.",
+    "quote": null,
+    "verdict": "rejected",
+    "method": "computation",
+    "reason": "operand 1 value 'content older than the configured 5-minute freshness window' does not appear within its own quote 'older than the configured 5-minute freshness window'",
+    "is_injected_fabrication": false
+  },
+  {
+    "worker_id": "meridian_cache_r7",
+    "source": "meridian_cache_postmortem.txt",
+    "text": "The backlog occurred due to a message-broker partition rebalance.",
+    "quote": "message-broker partition rebalance",
+    "verdict": "confirmed",
+    "method": "deterministic",
+    "reason": "quote round-trips into the live-refetched source",
+    "is_injected_fabrication": false
+  },
+  {
+    "worker_id": "meridian_cache_r7",
+    "source": "meridian_cache_postmortem.txt",
+    "text": "The incident duration was 27 minutes.",
+    "quote": "a total incident duration of 27 minutes",
+    "verdict": "confirmed",
+    "method": "deterministic",
+    "reason": "quote round-trips into the live-refetched source",
+    "is_injected_fabrication": false
+  },
+  {
+    "worker_id": "meridian_cache_r7",
+    "source": "meridian_cache_postmortem.txt",
+    "text": "No customer data was exposed or corrupted.",
+    "quote": "No customer data was exposed or corrupted",
+    "verdict": "confirmed",
+    "method": "deterministic",
+    "reason": "quote round-trips into the live-refetched source",
+    "is_injected_fabrication": false
+  },
+  {
+    "worker_id": "meridian_cache_r7",
+    "source": "meridian_cache_postmortem.txt",
+    "text": "Meridian Cache is adding dead-letter alerts and increasing partition count to prevent future incidents.",
+    "quote": "adding a dead-letter alert for invalidation-queue backlogs exceeding 2 minutes and increasing partition count from 6 to 12",
+    "verdict": "confirmed",
+    "method": "deterministic",
+    "reason": "quote round-trips into the live-refetched source",
+    "is_injected_fabrication": false
+  },
+  {
+    "worker_id": "meridian_cache_r8",
+    "source": "meridian_cache_postmortem.txt",
+    "text": "The incident lasted 27 minutes.",
+    "quote": "Full cache freshness was restored by 03:41 UTC, a total incident duration of 27 minutes.\n",
+    "verdict": "confirmed",
+    "method": "deterministic",
+    "reason": "quote round-trips into the live-refetched source",
+    "is_injected_fabrication": false
+  },
+  {
+    "worker_id": "meridian_cache_r9",
+    "source": "meridian_cache_postmortem.txt",
+    "text": "The incident caused approximately 22% of read requests to receive stale content.",
+    "quote": "Approximately 22% of read requests during the incident window received content older than the configured 5-minute freshness window.",
+    "verdict": "confirmed",
+    "method": "deterministic",
+    "reason": "quote round-trips into the live-refetched source",
+    "is_injected_fabrication": false
+  },
+  {
+    "worker_id": "meridian_cache_r9",
+    "source": "meridian_cache_postmortem.txt",
+    "text": "The backlog was paused for 11 minutes due to a message-broker partition rebalance.",
+    "quote": "The backlog...was caused by a message-broker partition rebalance that paused invalidation delivery for 11 minutes.",
+    "verdict": "rejected",
+    "method": "deterministic",
+    "reason": "quote does not appear in the source text, invented or altered",
+    "is_injected_fabrication": false
+  },
+  {
+    "worker_id": "meridian_cache_r9",
+    "source": "meridian_cache_postmortem.txt",
+    "text": "Meridian Cache is taking steps to prevent similar issues in the future.",
+    "quote": null,
+    "verdict": "unverified",
+    "method": "fail_closed",
+    "reason": "computation payload malformed: 'quote'",
+    "is_injected_fabrication": false
+  },
+  {
+    "worker_id": "meridian_cache_r9",
+    "source": "meridian_cache_postmortem.txt",
+    "text": "The incident lasted for 27 minutes.",
+    "quote": "Full cache freshness was restored by 03:41 UTC, a total incident duration of 27 minutes.",
+    "verdict": "confirmed",
+    "method": "deterministic",
+    "reason": "quote round-trips into the live-refetched source",
+    "is_injected_fabrication": false
+  },
+  {
+    "worker_id": "meridian_cache_r10",
+    "source": "meridian_cache_postmortem.txt",
+    "text": "The incident duration totalled 27 minutes.",
+    "quote": "Full cache freshness was restored by 03:41 UTC, a total incident duration of 27 minutes.",
+    "verdict": "confirmed",
+    "method": "deterministic",
+    "reason": "quote round-trips into the live-refetched source",
+    "is_injected_fabrication": false
+  },
+  {
+    "worker_id": "meridian_cache_r10",
+    "source": "meridian_cache_postmortem.txt",
+    "text": "-22% of requests saw stale content.",
+    "quote": "Approximately 22% of read requests during the incident window received content older than the configured 5-minute freshness window.",
+    "verdict": "confirmed",
+    "method": "deterministic",
+    "reason": "quote round-trips into the live-refetched source",
+    "is_injected_fabrication": false
+  },
+  {
+    "worker_id": "meridian_cache_r11",
+    "source": "meridian_cache_postmortem.txt",
+    "text": "The incident lasted for 27 minutes.",
+    "quote": "Total incident duration of 27 minutes.",
+    "verdict": "confirmed",
+    "method": "deterministic",
+    "reason": "quote round-trips into the live-refetched source",
+    "is_injected_fabrication": false
+  },
+  {
+    "worker_id": "meridian_cache_r11",
+    "source": "meridian_cache_postmortem.txt",
+    "text": "Approximately 22% of read requests were affected by stale content.",
+    "quote": "...22% of read requests during the incident window received content older than the configured 5-minute freshness window.",
+    "verdict": "rejected",
+    "method": "deterministic",
+    "reason": "quote does not appear in the source text, invented or altered",
+    "is_injected_fabrication": false
+  },
+  {
+    "worker_id": "anchor_cdn_r1",
+    "source": "anchor_cdn_postmortem.txt",
+    "text": "the expiration of the TLS certificate for api.anchorcdn.net affected 100% of traffic to that specific hostname for 34 minutes",
+    "quote": "Incident ID: AC-2026-0622-3. At 06:00 UTC on 2026-06-22, an automated TLS certificate for Anchor CDN's api.anchorcdn.net endpoint expired without being renewed, causing all HTTPS requests to that hostname to fail with certificate validation errors for 34 minutes.",
+    "verdict": "confirmed",
+    "method": "deterministic",
+    "reason": "quote round-trips into the live-refetched source",
+    "is_injected_fabrication": false
+  },
+  {
+    "worker_id": "anchor_cdn_r1",
+    "source": "anchor_cdn_postmortem.txt",
+    "text": "the renewal failure was traced to the expiry of API tokens in the renewal automation",
+    "quote": null,
+    "verdict": "unverified",
+    "method": "fail_closed",
+    "reason": "unsupported or unparseable computation: 'sum' over ['since the automation was last updated.']",
+    "is_injected_fabrication": false
+  },
+  {
+    "worker_id": "anchor_cdn_r1",
+    "source": "anchor_cdn_postmortem.txt",
+    "text": "traffic to other Anchor CDN hostnames was unaffected",
+    "quote": "Roughly 100% of traffic to that specific hostname was affected; traffic to other Anchor CDN hostnames was unaffected.",
+    "verdict": "confirmed",
+    "method": "deterministic",
+    "reason": "quote round-trips into the live-refetched source",
+    "is_injected_fabrication": false
+  },
+  {
+    "worker_id": "anchor_cdn_r1",
+    "source": "anchor_cdn_postmortem.txt",
+    "text": "the certificate renewal has since been moved away from using API tokens",
+    "quote": null,
+    "verdict": "rejected",
+    "method": "computation",
+    "reason": "operand 0 value '...' does not appear within its own quote 'Anchor CDN is adding a 14-day-before-expiry alert for all renewal-automation credentials and moving certificate renewal to a credential-less workload-identity flow.'",
+    "is_injected_fabrication": false
+  },
+  {
+    "worker_id": "anchor_cdn_r2",
+    "source": "anchor_cdn_postmortem.txt",
+    "text": "Expired API token caused TLS cert expiration and failure",
+    "quote": "expired API token used by the certificate-renewal automation, which had not been rotated since the automation was last updated.",
+    "verdict": "confirmed",
+    "method": "deterministic",
+    "reason": "quote round-trips into the live-refetched source",
+    "is_injected_fabrication": false
+  },
+  {
+    "worker_id": "anchor_cdn_r2",
+    "source": "anchor_cdn_postmortem.txt",
+    "text": "No data was lost from failed requests",
+    "quote": "No data was lost; failed requests simply received connection errors and were retried by client SDKs.",
+    "verdict": "confirmed",
+    "method": "deterministic",
+    "reason": "quote round-trips into the live-refetched source",
+    "is_injected_fabrication": false
+  },
+  {
+    "worker_id": "anchor_cdn_r2",
+    "source": "anchor_cdn_postmortem.txt",
+    "text": "14-day-before-expiry alert for renewal-automation credentials will be added",
+    "quote": "Anchor CDN is adding a 14-day-before-expiry alert for all renewal-automation credentials",
+    "verdict": "confirmed",
+    "method": "deterministic",
+    "reason": "quote round-trips into the live-refetched source",
+    "is_injected_fabrication": false
+  },
+  {
+    "worker_id": "anchor_cdn_r3",
+    "source": "anchor_cdn_postmortem.txt",
+    "text": "At 06:00 UTC on 2026-06-22, an automated TLS certificate expired without being renewed, causing HTTPS requests to api.anchorcdn.net to fail for 34 minutes",
+    "quote": "At 06:00 UTC on 2026-06-22, an automated TLS certificate for Anchor CDN's api.anchorcdn.net endpoint expired without being renewed, causing all HTTPS requests to that hostname to fail with certificate validation errors for 34 minutes.",
+    "verdict": "confirmed",
+    "method": "deterministic",
+    "reason": "quote round-trips into the live-refetched source",
+    "is_injected_fabrication": false
+  },
+  {
+    "worker_id": "anchor_cdn_r3",
+    "source": "anchor_cdn_postmortem.txt",
+    "text": "The renewal failure was traced to an expired API token used by the certificate-renewal automation",
+    "quote": "The renewal failure was traced to an expired API token used by the certificate-renewal automation, which had not been rotated since the automation was last updated.",
+    "verdict": "confirmed",
+    "method": "deterministic",
+    "reason": "quote round-trips into the live-refetched source",
+    "is_injected_fabrication": false
+  },
+  {
+    "worker_id": "anchor_cdn_r3",
+    "source": "anchor_cdn_postmortem.txt",
+    "text": "Failed requests simply received connection errors and were retried by client SDKs",
+    "quote": "No data was lost; failed requests simply received connection errors and were retried by client SDKs.",
+    "verdict": "confirmed",
+    "method": "deterministic",
+    "reason": "quote round-trips into the live-refetched source",
+    "is_injected_fabrication": false
+  },
+  {
+    "worker_id": "anchor_cdn_r3",
+    "source": "anchor_cdn_postmortem.txt",
+    "text": "Anchor CDN is taking various steps to prevent future renewals failures, including adding a 14-day-before-expiry alert for renewal-automation credentials",
+    "quote": "Anchor CDN is adding a 14-day-before-expiry alert for all renewal-automation credentials and moving certificate renewal to a credential-less workload-identity flow.",
+    "verdict": "confirmed",
+    "method": "deterministic",
+    "reason": "quote round-trips into the live-refetched source",
+    "is_injected_fabrication": false
+  },
+  {
+    "worker_id": "anchor_cdn_r4",
+    "source": "anchor_cdn_postmortem.txt",
+    "text": "TLS certificate expired without being renewed, causing service interruption",
+    "quote": "an automated TLS certificate for Anchor CDN's api.anchorcdn.net endpoint expired without being renewed, causing all HTTPS requests to that hostname to fail with certificate validation errors for 34 minutes.",
+    "verdict": "rejected",
+    "method": "computation",
+    "reason": "recomputed duration_minutes = 28, but claim asserts 34",
+    "is_injected_fabrication": false
+  },
+  {
+    "worker_id": "anchor_cdn_r4",
+    "source": "anchor_cdn_postmortem.txt",
+    "text": "Expired API token caused the renewal failure",
+    "quote": "The renewal failure was traced to an expired API token used by the certificate-renewal automation, which had not been rotated since the automation was last updated.",
+    "verdict": "confirmed",
+    "method": "deterministic",
+    "reason": "quote round-trips into the live-refetched source",
+    "is_injected_fabrication": false
+  },
+  {
+    "worker_id": "anchor_cdn_r4",
+    "source": "anchor_cdn_postmortem.txt",
+    "text": "Rollout completion time was 06:34 UTC",
+    "quote": "On-call engineers were paged by an external uptime monitor at 06:19 UTC, manually issued a new certificate at 06:28 UTC, and completed rollout to all edge nodes by 06:34 UTC.",
+    "verdict": "confirmed",
+    "method": "deterministic",
+    "reason": "quote round-trips into the live-refetched source",
+    "is_injected_fabrication": false
+  },
+  {
+    "worker_id": "anchor_cdn_r5",
+    "source": "anchor_cdn_postmortem.txt",
+    "text": "certificate for Anchor CDN's api.anchorcdn.net expired",
+    "quote": "Expired TLS certificate",
+    "verdict": "rejected",
+    "method": "deterministic",
+    "reason": "quote does not appear in the source text, invented or altered",
+    "is_injected_fabrication": false
+  },
+  {
+    "worker_id": "anchor_cdn_r5",
+    "source": "anchor_cdn_postmortem.txt",
+    "text": "causing all HTTPS requests to that hostname to fail for 34 minutes",
+    "quote": "all HTTPS requests to that hostname failed with certificate validation errors for 34 minutes",
+    "verdict": "rejected",
+    "method": "deterministic",
+    "reason": "quote does not appear in the source text, invented or altered",
+    "is_injected_fabrication": false
+  },
+  {
+    "worker_id": "anchor_cdn_r5",
+    "source": "anchor_cdn_postmortem.txt",
+    "text": "100% of traffic was affected by the issue",
+    "quote": null,
+    "verdict": "unverified",
+    "method": "fail_closed",
+    "reason": "computation payload malformed: 'result'",
+    "is_injected_fabrication": false
+  },
+  {
+    "worker_id": "anchor_cdn_r6",
+    "source": "anchor_cdn_postmortem.txt",
+    "text": "Incident ID: AC-2026-0622-3. At 06:00 UTC on 2026-06-22, an automated TLS certificate for Anchor CDN's api.anchorcdn.net endpoint expired without being renewed, causing all HTTPS requests to that hostname to fail with certificate validation errors for 34 minutes.",
+    "quote": "Incident ID: AC-2026-0622-3. At 06:00 UTC on 2026-06-22, an automated TLS certificate for Anchor CDN's api.anchorcdn.net endpoint expired without being renewed, causing all HTTPS requests to that hostname to fail with certificate validation errors for 34 minutes.",
+    "verdict": "confirmed",
+    "method": "deterministic",
+    "reason": "quote round-trips into the live-refetched source",
+    "is_injected_fabrication": false
+  },
+  {
+    "worker_id": "anchor_cdn_r6",
+    "source": "anchor_cdn_postmortem.txt",
+    "text": "Roughly 100% of traffic to that specific hostname was affected; traffic to other Anchor CDN hostnames was unaffected.",
+    "quote": null,
+    "verdict": "confirmed",
+    "method": "llm_judge",
+    "reason": "The source explicitly mentions that roughly 100% of traffic to the specific hostname api.anchorcdn.net was affected, while traffic to other Anchor CDN hostnames remained unaffected.",
+    "is_injected_fabrication": false
+  },
+  {
+    "worker_id": "anchor_cdn_r6",
+    "source": "anchor_cdn_postmortem.txt",
+    "text": "The renewal failure was traced to an expired API token used by the certificate-renewal automation, which had not been rotated since the automation was last updated. On-call engineers were paged by an external uptime monitor at 06:19 UTC, manually issued a new certificate at 06:28 UTC, and completed rollout to all edge nodes by 06:34 UTC.",
+    "quote": null,
+    "verdict": "confirmed",
+    "method": "llm_judge",
+    "reason": "The source text directly states that the renewal failure was traced to an expired API token used by the certificate-renewal automation and then describes how engineers responded after being paged.",
+    "is_injected_fabrication": false
+  },
+  {
+    "worker_id": "anchor_cdn_r6",
+    "source": "anchor_cdn_postmortem.txt",
+    "text": "No data was lost; failed requests simply received connection errors and were retried by client SDKs. Anchor CDN is adding a 14-day-before-expiry alert for all renewal-automation credentials and moving certificate renewal to a credential-less workload-identity flow.",
+    "quote": null,
+    "verdict": "confirmed",
+    "method": "llm_judge",
+    "reason": "The source directly states that no data was lost, failed requests simply received connection errors and were retried by client SDKs; and further mentions the steps taken to prevent future expiration issues.",
+    "is_injected_fabrication": false
+  },
+  {
+    "worker_id": "anchor_cdn_r7",
+    "source": "anchor_cdn_postmortem.txt",
+    "text": "The automated TLS certificate for api.anchorcdn.net expired causing errors for 34 minutes.",
+    "quote": "At 06:00 UTC on 2026-06-22, an automated TLS certificate for Anchor CDN's api.anchorcdn.net endpoint expired without being renewed, causing all HTTPS requests to that hostname to fail with certificate validation errors for 34 minutes.",
+    "verdict": "confirmed",
+    "method": "deterministic",
+    "reason": "quote round-trips into the live-refetched source",
+    "is_injected_fabrication": false
+  },
+  {
+    "worker_id": "anchor_cdn_r7",
+    "source": "anchor_cdn_postmortem.txt",
+    "text": "The renewal failure was traced to an expired API token which had not been rotated since the automation was last updated.",
+    "quote": "The renewal failure was traced to an expired API token used by the certificate-renewal automation, which had not been rotated since the automation was last updated.",
+    "verdict": "confirmed",
+    "method": "deterministic",
+    "reason": "quote round-trips into the live-refetched source",
+    "is_injected_fabrication": false
+  },
+  {
+    "worker_id": "anchor_cdn_r7",
+    "source": "anchor_cdn_postmortem.txt",
+    "text": "All on-call engineers were paged at 06:19 UTC and a new certificate was issued by 06:28 UTC.",
+    "quote": "On-call engineers were paged by an external uptime monitor at 06:19 UTC, manually issued a new certificate at 06:28 UTC, and completed rollout to all edge nodes by 06:34 UTC.",
+    "verdict": "confirmed",
+    "method": "deterministic",
+    "reason": "quote round-trips into the live-refetched source",
+    "is_injected_fabrication": false
+  },
+  {
+    "worker_id": "anchor_cdn_r7",
+    "source": "anchor_cdn_postmortem.txt",
+    "text": "No data was lost; instead, clients received connection errors and retried the requests.",
+    "quote": "No data was lost; failed requests simply received connection errors and were retried by client SDKs.",
+    "verdict": "confirmed",
+    "method": "deterministic",
+    "reason": "quote round-trips into the live-refetched source",
+    "is_injected_fabrication": false
+  },
+  {
+    "worker_id": "anchor_cdn_r7",
+    "source": "anchor_cdn_postmortem.txt",
+    "text": "Anchor CDN plans to add a 14-day alert before expiry for all renewal automation credentials.",
+    "quote": "Anchor CDN is adding a 14-day-before-expiry alert for all renewal-automation credentials",
+    "verdict": "confirmed",
+    "method": "deterministic",
+    "reason": "quote round-trips into the live-refetched source",
+    "is_injected_fabrication": false
+  },
+  {
+    "worker_id": "anchor_cdn_r8",
+    "source": "anchor_cdn_postmortem.txt",
+    "text": "The renewal failure was traced to an expired API token used by the certificate-renewal automation, which had not been rotated since the automation was last updated.",
+    "quote": "<PRESIDIO_ANONYMIZED_PERSON> automation, expired API token",
+    "verdict": "rejected",
+    "method": "deterministic",
+    "reason": "quote does not appear in the source text, invented or altered",
+    "is_injected_fabrication": false
+  },
+  {
+    "worker_id": "anchor_cdn_r9",
+    "source": "anchor_cdn_postmortem.txt",
+    "text": "Roughly 100% of traffic to that specific hostname was affected; traffic to other Anchor CDN hostnames was unaffected.",
+    "quote": "Roughly 100% of traffic to that specific hostname was affected; traffic to other Anchor CDN hostnames was unaffected.",
+    "verdict": "confirmed",
+    "method": "deterministic",
+    "reason": "quote round-trips into the live-refetched source",
+    "is_injected_fabrication": false
+  },
+  {
+    "worker_id": "anchor_cdn_r9",
+    "source": "anchor_cdn_postmortem.txt",
+    "text": "The renewal failure was traced to an expired API token used by the certificate-renewal automation, which had not been rotated since the automation was last updated.",
+    "quote": "The renewal failure was traced to an expired API token used by the certificate-renewal automation, which had not been rotated since the automation was last updated.",
+    "verdict": "confirmed",
+    "method": "deterministic",
+    "reason": "quote round-trips into the live-refetched source",
+    "is_injected_fabrication": false
+  },
+  {
+    "worker_id": "anchor_cdn_r9",
+    "source": "anchor_cdn_postmortem.txt",
+    "text": "On-call engineers were paged by an external uptime monitor at 06:19 UTC, manually issued a new certificate at 06:28 UTC, and completed rollout to all edge nodes by 06:34 UTC.",
+    "quote": "On-call engineers were paged by an external uptime monitor at 06:19 UTC, manually issued a new certificate at 06:28 UTC, and completed rollout to all edge nodes by 06:34 UTC.",
+    "verdict": "confirmed",
+    "method": "deterministic",
+    "reason": "quote round-trips into the live-refetched source",
+    "is_injected_fabrication": false
+  },
+  {
+    "worker_id": "anchor_cdn_r9",
+    "source": "anchor_cdn_postmortem.txt",
+    "text": "No data was lost; failed requests simply received connection errors and were retried by client SDKs.",
+    "quote": "No data was lost; failed requests simply received connection errors and were retried by client SDKs.",
+    "verdict": "confirmed",
+    "method": "deterministic",
+    "reason": "quote round-trips into the live-refetched source",
+    "is_injected_fabrication": false
+  },
+  {
+    "worker_id": "anchor_cdn_r9",
+    "source": "anchor_cdn_postmortem.txt",
+    "text": "Anchor CDN is adding a 14-day-before-expiry alert for all renewal-automation credentials and moving certificate renewal to a credential-less workload-identity flow.",
+    "quote": "Anchor CDN is adding a 14-day-before-expiry alert for all renewal-automation credentials and moving certificate renewal to a credential-less workload-identity flow.",
+    "verdict": "confirmed",
+    "method": "deterministic",
+    "reason": "quote round-trips into the live-refetched source",
+    "is_injected_fabrication": false
+  },
+  {
+    "worker_id": "anchor_cdn_r10",
+    "source": "anchor_cdn_postmortem.txt",
+    "text": "certificate expired without being renewed, causing all HTTPS requests",
+    "quote": "expired API token used by the certificate-renewal automation",
+    "verdict": "confirmed",
+    "method": "deterministic",
+    "reason": "quote round-trips into the live-refetched source",
+    "is_injected_fabrication": false
+  },
+  {
+    "worker_id": "anchor_cdn_r10",
+    "source": "anchor_cdn_postmortem.txt",
+    "text": "a 34-minute outage where no data was lost; failed requests received connection errors and were retried by client SDKs.",
+    "quote": "renewal-automation credentials... adding a 14-day-before-expiry alert for",
+    "verdict": "rejected",
+    "method": "deterministic",
+    "reason": "quote does not appear in the source text, invented or altered",
+    "is_injected_fabrication": false
+  },
+  {
+    "worker_id": "anchor_cdn_r11",
+    "source": "anchor_cdn_postmortem.txt",
+    "text": "Incident ID: AC-2026-0622-3. At 06:00 UTC on 2026-06-22, an automated TLS certificate for Anchor CDN's api.anchorcdn.net endpoint expired without being renewed, causing all HTTPS requests to that hostname to fail with certificate validation errors for 34 minutes.",
+    "quote": "an automated TLS certificate for Anchor CDN's api.anchorcdn.net endpoint expired without being renewed, causing all HTTPS requests to that hostname to fail with certificate validation errors for 34 minutes.",
+    "verdict": "confirmed",
+    "method": "deterministic",
+    "reason": "quote round-trips into the live-refetched source",
+    "is_injected_fabrication": false
+  },
+  {
+    "worker_id": "anchor_cdn_r11",
+    "source": "anchor_cdn_postmortem.txt",
+    "text": "Roughly 100% of traffic to that specific hostname was affected; traffic to other Anchor CDN hostnames was unaffected.",
+    "quote": null,
+    "verdict": "confirmed",
+    "method": "llm_judge",
+    "reason": "The source text explicitly states that roughly 100% of the traffic to api.anchorcdn.net was affected and that traffic to other Anchor CDN hostnames remained unaffected.",
+    "is_injected_fabrication": false
+  },
+  {
+    "worker_id": "anchor_cdn_r11",
+    "source": "anchor_cdn_postmortem.txt",
+    "text": "On-call engineers were paged by an external uptime monitor at 06:19 UTC, manually issued a new certificate at 06:28 UTC, and completed rollout to all edge nodes by 06:34 UTC.",
+    "quote": null,
+    "verdict": "confirmed",
+    "method": "llm_judge",
+    "reason": "The SOURCE text clearly states that 'On-call engineers were paged at 06:19 UTC by an external uptime monitor, manually issued a new certificate at 06:28 UTC, and completed rollout to all edge nodes by 06:34 UTC.'",
+    "is_injected_fabrication": false
+  },
+  {
+    "worker_id": "anchor_cdn_r11",
+    "source": "anchor_cdn_postmortem.txt",
+    "text": "failed requests simply received connection errors and were retried by client SDKs",
+    "quote": null,
+    "verdict": "confirmed",
+    "method": "llm_judge",
+    "reason": "The SOURCE text explicitly states that failed requests simply received connection errors and were retried by client SDKs.",
+    "is_injected_fabrication": false
+  },
+  {
+    "worker_id": "solace_queue_r1",
+    "source": "solace_queue_postmortem.txt",
+    "text": "Consumer lag grew to approximately 340,000 unacknowledged messages at peak.",
+    "quote": "Consumer lag grew to approximately 340,000 unacknowledged messages at peak.",
+    "verdict": "rejected",
+    "method": "deterministic",
+    "reason": "quote does not appear in the source text, invented or altered",
+    "is_injected_fabrication": false
+  },
+  {
+    "worker_id": "solace_queue_r1",
+    "source": "solace_queue_postmortem.txt",
+    "text": "Full backlog drain completed at 12:52 UTC.",
+    "quote": "Full backlog drain completed at 12:52 UTC.",
+    "verdict": "confirmed",
+    "method": "deterministic",
+    "reason": "quote round-trips into the live-refetched source",
+    "is_injected_fabrication": false
+  },
+  {
+    "worker_id": "solace_queue_r1",
+    "source": "solace_queue_postmortem.txt",
+    "text": "Delivering order-event delayed by up to 19 minutes due the incident.",
+    "quote": null,
+    "verdict": "rejected",
+    "method": "computation",
+    "reason": "operand 0 quote does not appear in the source text: 'None'",
+    "is_injected_fabrication": false
+  },
+  {
+    "worker_id": "solace_queue_r2",
+    "source": "solace_queue_postmortem.txt",
+    "text": "Engineers identified the slow receiver due to alerting at 12:03 UTC.",
+    "quote": "Consumer-lag alerting revealed the issue starting at 12:03 UTC.",
+    "verdict": "rejected",
+    "method": "deterministic",
+    "reason": "quote does not appear in the source text, invented or altered",
+    "is_injected_fabrication": false
+  },
+  {
+    "worker_id": "solace_queue_r2",
+    "source": "solace_queue_postmortem.txt",
+    "text": "The specific partner's concurrency was throttled and stabilized lag within 8 minutes.",
+    "quote": "Throttled the specific partner\u2019s webhook concurrency with positive results within 8 minutes.",
+    "verdict": "rejected",
+    "method": "deterministic",
+    "reason": "quote does not appear in the source text, invented or altered",
+    "is_injected_fabrication": false
+  },
+  {
+    "worker_id": "solace_queue_r3",
+    "source": "solace_queue_postmortem.txt",
+    "text": "Consumer lag grew to approximately 340,000 unacknowledged messages at peak, delaying order-event delivery by up to 19 minutes for affected customers.",
+    "quote": null,
+    "verdict": "unverified",
+    "method": "fail_closed",
+    "reason": "unsupported or unparseable computation: 'none' over []",
+    "is_injected_fabrication": false
+  },
+  {
+    "worker_id": "solace_queue_r3",
+    "source": "solace_queue_postmortem.txt",
+    "text": "The full backlog drain completed at 12:52 UTC.",
+    "quote": "12:52 UTC",
+    "verdict": "unverified",
+    "method": "fail_closed",
+    "reason": "unsupported or unparseable computation: 'none' over []",
+    "is_injected_fabrication": false
+  },
+  {
+    "worker_id": "solace_queue_r4",
+    "source": "solace_queue_postmortem.txt",
+    "text": "Consumer lag grew to approximately 340,000 unacknowledged messages at peak, delaying order-event delivery by up to 19 minutes for affected customers.",
+    "quote": "Consumer lag grew to approximately 340,000 unacknowledged messages at peak, delaying order-event delivery by up to 19 minutes for affected customers.",
+    "verdict": "confirmed",
+    "method": "deterministic",
+    "reason": "quote round-trips into the live-refetched source",
+    "is_injected_fabrication": false
+  },
+  {
+    "worker_id": "solace_queue_r4",
+    "source": "solace_queue_postmortem.txt",
+    "text": "Full backlog drain completed at 12:52 UTC.",
+    "quote": "Full backlog drain completed at 12:52 UTC.",
+    "verdict": "confirmed",
+    "method": "deterministic",
+    "reason": "quote round-trips into the live-refetched source",
+    "is_injected_fabrication": false
+  },
+  {
+    "worker_id": "solace_queue_r4",
+    "source": "solace_queue_postmortem.txt",
+    "text": "Solace Queue is adding per-partner concurrency limits by default for all new webhook integrations and a consumer-lag alert threshold of 50,000 messages.",
+    "quote": null,
+    "verdict": "rejected",
+    "method": "computation",
+    "reason": "operand 0 quote does not appear in the source text: \"the queue's retention window was never approached\"",
+    "is_injected_fabrication": false
+  },
+  {
+    "worker_id": "solace_queue_r5",
+    "source": "solace_queue_postmortem.txt",
+    "text": "Consumer lag grew to approximately 340,000 unacknowledged messages at peak.",
+    "quote": "Consumer lag grew to approximately 340,000 unacknowledged messages at peak.",
+    "verdict": "rejected",
+    "method": "deterministic",
+    "reason": "quote does not appear in the source text, invented or altered",
+    "is_injected_fabrication": false
+  },
+  {
+    "worker_id": "solace_queue_r5",
+    "source": "solace_queue_postmortem.txt",
+    "text": "delivering order-event delivery by up to 19 minutes for affected customers",
+    "quote": "delivery by up to 19 minutes for affected customers",
+    "verdict": "confirmed",
+    "method": "deterministic",
+    "reason": "quote round-trips into the live-refetched source",
+    "is_injected_fabrication": false
+  },
+  {
+    "worker_id": "solace_queue_r6",
+    "source": "solace_queue_postmortem.txt",
+    "text": "Engineers identified the slow receiver via consumer-lag alerting at 12:03 UTC and throttled the specific partner's webhook concurrency at 12:11 UTC.",
+    "quote": "`The slow downstream webhook receiver was discovered by engineers at 12:03 UTC.'",
+    "verdict": "rejected",
+    "method": "deterministic",
+    "reason": "quote does not appear in the source text, invented or altered",
+    "is_injected_fabrication": false
+  },
+  {
+    "worker_id": "solace_queue_r6",
+    "source": "solace_queue_postmortem.txt",
+    "text": "Solace Queue is adding per-partner concurrency limits by default for all new webhook integrations and a consumer-lag alert threshold of 50,000 messages.",
+    "quote": null,
+    "verdict": "unverified",
+    "method": "fail_closed",
+    "reason": "computation payload malformed: 'quote'",
+    "is_injected_fabrication": false
+  },
+  {
+    "worker_id": "solace_queue_r7",
+    "source": "solace_queue_postmortem.txt",
+    "text": "Consumer lag grew to approximately 340,000 unacknowledged messages at peak, delaying order-event delivery by up to 19 minutes for affected customers.",
+    "quote": "Consumer lag grew to approximately 340,000 unacknowledged messages at peak, delaying order-event delivery by up to 19 minutes for affected customers.",
+    "verdict": "confirmed",
+    "method": "deterministic",
+    "reason": "quote round-trips into the live-refetched source",
+    "is_injected_fabrication": false
+  },
+  {
+    "worker_id": "solace_queue_r7",
+    "source": "solace_queue_postmortem.txt",
+    "text": "Full backlog drain completed at 12:52 UTC.",
+    "quote": "Full backlog drain completed at 12:52 UTC.",
+    "verdict": "confirmed",
+    "method": "deterministic",
+    "reason": "quote round-trips into the live-refetched source",
+    "is_injected_fabrication": false
+  },
+  {
+    "worker_id": "solace_queue_r7",
+    "source": "solace_queue_postmortem.txt",
+    "text": "Throttled the specific partner's webhook concurrency at 12:11 UTC, which stabilized lag within 8 minutes.",
+    "quote": null,
+    "verdict": "rejected",
+    "method": "computation",
+    "reason": "recomputed duration_minutes = 1432, but claim asserts 8",
+    "is_injected_fabrication": false
+  },
+  {
+    "worker_id": "solace_queue_r8",
+    "source": "solace_queue_postmortem.txt",
+    "text": "Consumer lag grew to approximately 340,000 unacknowledged messages at peak.",
+    "quote": "\"approximate",
+    "verdict": "rejected",
+    "method": "deterministic",
+    "reason": "quote does not appear in the source text, invented or altered",
+    "is_injected_fabrication": false
+  },
+  {
+    "worker_id": "solace_queue_r9",
+    "source": "solace_queue_postmortem.txt",
+    "text": "The engineers throttled the specific partner's webhook concurrency at 12:11 UTC.",
+    "quote": "throttled the specific partner's webhook concurrency at 12:11 UTC",
+    "verdict": "confirmed",
+    "method": "deterministic",
+    "reason": "quote round-trips into the live-refetched source",
+    "is_injected_fabrication": false
+  },
+  {
+    "worker_id": "solace_queue_r9",
+    "source": "solace_queue_postmortem.txt",
+    "text": "Consumer lag grew to approximately 340,000 unacknowledged messages at peak.",
+    "quote": "Consumer lag grew to approximately 340,\u00170,000 unacknowledged messages at peak",
+    "verdict": "rejected",
+    "method": "deterministic",
+    "reason": "quote does not appear in the source text, invented or altered",
+    "is_injected_fabrication": false
+  },
+  {
+    "worker_id": "solace_queue_r9",
+    "source": "solace_queue_postmortem.txt",
+    "text": "The queue\u2019s retention window of 72 hours was never approached.",
+    "quote": "'s retention window of 72 hours was never approached'",
+    "verdict": "rejected",
+    "method": "deterministic",
+    "reason": "quote does not appear in the source text, invented or altered",
+    "is_injected_fabrication": false
+  },
+  {
+    "worker_id": "solace_queue_r9",
+    "source": "solace_queue_postmortem.txt",
+    "text": "delays in order-event delivery ranged up to 19 minutes for affected customers",
+    "quote": "delays in order-event delivery ranged up to 19 minutes for affected customers",
+    "verdict": "rejected",
+    "method": "deterministic",
+    "reason": "quote does not appear in the source text, invented or altered",
+    "is_injected_fabrication": false
+  },
+  {
+    "worker_id": "solace_queue_r10",
+    "source": "solace_queue_postmortem.txt",
+    "text": "A queue retention window of 72 hours was never approached.",
+    "quote": "A queue's retention window of 72 hours was never approached.",
+    "verdict": "rejected",
+    "method": "deterministic",
+    "reason": "quote does not appear in the source text, invented or altered",
+    "is_injected_fabrication": false
+  },
+  {
+    "worker_id": "solace_queue_r10",
+    "source": "solace_queue_postmortem.txt",
+    "text": "The full backlog drain completed at 12:52 UTC.",
+    "quote": "Full backlog drain completed at 12:52 UTC.",
+    "verdict": "confirmed",
+    "method": "deterministic",
+    "reason": "quote round-trips into the live-refetched source",
+    "is_injected_fabrication": false
+  },
+  {
+    "worker_id": "solace_queue_r11",
+    "source": "solace_queue_postmortem.txt",
+    "text": "Consumer lag grew to approximately 340,000 unacknowledged messages at peak.",
+    "quote": "Consumer lag grew to approximately 340,000 unacknowledged messages at peak.",
+    "verdict": "rejected",
+    "method": "deterministic",
+    "reason": "quote does not appear in the source text, invented or altered",
+    "is_injected_fabrication": false
+  },
+  {
+    "worker_id": "solace_queue_r11",
+    "source": "solace_queue_postmortem.txt",
+    "text": "Full backlog drain completed at 12:52 UTC.",
+    "quote": "Full backlog drain completed at 12:52 UTC.",
+    "verdict": "confirmed",
+    "method": "deterministic",
+    "reason": "quote round-trips into the live-refetched source",
+    "is_injected_fabrication": false
+  },
+  {
+    "worker_id": "solace_queue_r11",
+    "source": "solace_queue_postmortem.txt",
+    "text": "Solace Queue is adding per-partner concurrency limits by default for all new webhook integrations and a consumer-lag alert threshold of 50,000 messages.",
+    "quote": "Solace Queue is adding per-partner concurrency limits by default for all new webhook integrations and a consumer-lag alert threshold of 50,000 messages.",
+    "verdict": "confirmed",
+    "method": "deterministic",
+    "reason": "quote round-trips into the live-refetched source",
+    "is_injected_fabrication": false
+  },
+  {
+    "worker_id": "ridgeline_auth_r1",
+    "source": "ridgeline_auth_postmortem.txt",
+    "text": "6% of session-refresh requests failed during the 22-minute incident window",
+    "quote": "Approximately 6% of session-refresh requests failed during the 22-minute incident window; users with still-valid access tokens were not logged out, but token refresh for expiring sessions failed for affected users.",
+    "verdict": "confirmed",
+    "method": "deterministic",
+    "reason": "quote round-trips into the live-refetched source",
+    "is_injected_fabrication": false
+  },
+  {
+    "worker_id": "ridgeline_auth_r2",
+    "source": "ridgeline_auth_postmortem.txt",
+    "text": "Approximately 6% of session-refresh requests failed during the 22-minute incident window.",
+    "quote": "Approximately 6% of session-refresh requests failed during the 22-minute incident window",
+    "verdict": "confirmed",
+    "method": "deterministic",
+    "reason": "quote round-trips into the live-refetched source",
+    "is_injected_fabrication": false
+  },
+  {
+    "worker_id": "ridgeline_auth_r2",
+    "source": "ridgeline_auth_postmortem.txt",
+    "text": "The batch job was identified via connection-pool saturation alerts at 20:11 UTC and killed at 20:14 UTC, after which the connection pool recovered automatically within 10 minutes.",
+    "quote": "The batch job was identified via connection-pool saturation alerts at 20:11 UTC and killed at 20:14 UTC, after which the connection pool recovered automatically within 10 minutes",
+    "verdict": "confirmed",
+    "method": "deterministic",
+    "reason": "quote round-trips into the live-refetched source",
+    "is_injected_fabrication": false
+  },
+  {
+    "worker_id": "ridgeline_auth_r2",
+    "source": "ridgeline_auth_postmortem.txt",
+    "text": "Ridgeline Auth is adding a hard connection-count cap to all batch jobs and a separate, smaller connection pool reserved exclusively for the session-refresh endpoint.",
+    "quote": "Ridgeline Auth is adding a hard connection-count cap to all batch jobs and a separate, smaller connection pool reserved exclusively for the session-refresh endpoint",
+    "verdict": "confirmed",
+    "method": "deterministic",
+    "reason": "quote round-trips into the live-refetched source",
+    "is_injected_fabrication": false
+  },
+  {
+    "worker_id": "ridgeline_auth_r3",
+    "source": "ridgeline_auth_postmortem.txt",
+    "text": "Approximately 6% of session-refresh requests failed during the 22-minute incident window.",
+    "quote": "Approximately 6% of session-refresh requests failed during the 22-minute incident window;",
+    "verdict": "confirmed",
+    "method": "deterministic",
+    "reason": "quote round-trips into the live-refetched source",
+    "is_injected_fabrication": false
+  },
+  {
+    "worker_id": "ridgeline_auth_r3",
+    "source": "ridgeline_auth_postmortem.txt",
+    "text": "The batch job was identified via connection-pool saturation alerts at 20:11 UTC and killed at 20:14 UTC, after which the connection pool recovered automatically within 10 minutes.",
+    "quote": "The batch job was identified via connection-pool saturation alerts at 20:11 UTC and killed at 20:14 UTC, after which the connection pool recovered automatically within 10 minutes.",
+    "verdict": "confirmed",
+    "method": "deterministic",
+    "reason": "quote round-trips into the live-refetched source",
+    "is_injected_fabrication": false
+  },
+  {
+    "worker_id": "ridgeline_auth_r3",
+    "source": "ridgeline_auth_postmortem.txt",
+    "text": "Ridgeline Auth is adding a hard connection-count cap to all batch jobs and a separate, smaller connection pool reserved exclusively for the session-refresh endpoint.",
+    "quote": "Ridgeline Auth is adding a hard connection-count cap to all batch jobs and a separate, smaller connection pool reserved exclusively for the session-refresh endpoint.",
+    "verdict": "confirmed",
+    "method": "deterministic",
+    "reason": "quote round-trips into the live-refetched source",
+    "is_injected_fabrication": false
+  },
+  {
+    "worker_id": "ridgeline_auth_r4",
+    "source": "ridgeline_auth_postmortem.txt",
+    "text": "The incident lasted approximately 22 minutes.",
+    "quote": "Incident ID: RA-2026-0715-1. At 20:02 UTC on 2026-07-15, Ridgeline Auth's session-refresh endpoint began returning elevated 500 errors after a database connection pool was exhausted by a misconfigured batch job...",
+    "verdict": "rejected",
+    "method": "deterministic",
+    "reason": "quote does not appear in the source text, invented or altered",
+    "is_injected_fabrication": false
+  },
+  {
+    "worker_id": "ridgeline_auth_r4",
+    "source": "ridgeline_auth_postmortem.txt",
+    "text": "Approximately 6% of session-refresh requests failed during the incident.",
+    "quote": "Approximately 6% of session-refresh requests failed during the 22-minute incident window;",
+    "verdict": "confirmed",
+    "method": "deterministic",
+    "reason": "quote round-trips into the live-refetched source",
+    "is_injected_fabrication": false
+  },
+  {
+    "worker_id": "ridgeline_auth_r4",
+    "source": "ridgeline_auth_postmortem.txt",
+    "text": "The affected users experienced issues with token refresh for expiring sessions, but no credentials or session data were exposed.",
+    "quote": "users with still-valid access tokens were not logged out, but token refresh for expiring sessions failed for affected users. The batch job was identified via connection-pool saturation alerts at 20:11 UTC and killed at 20:14 UTC, after which the connection pool recovered automatically within...",
+    "verdict": "rejected",
+    "method": "deterministic",
+    "reason": "quote does not appear in the source text, invented or altered",
+    "is_injected_fabrication": false
+  },
+  {
+    "worker_id": "ridgeline_auth_r4",
+    "source": "ridgeline_auth_postmortem.txt",
+    "text": "The incident response entailed killing the erroneous batch job.",
+    "quote": "The batch job was identified via connection-pool saturation alerts at 20:11 UTC and killed at 20:14 UTC",
+    "verdict": "confirmed",
+    "method": "deterministic",
+    "reason": "quote round-trips into the live-refetched source",
+    "is_injected_fabrication": false
+  },
+  {
+    "worker_id": "ridgeline_auth_r5",
+    "source": "ridgeline_auth_postmortem.txt",
+    "text": "Incident ID: RA-2026-0715-1.",
+    "quote": null,
+    "verdict": "confirmed",
+    "method": "llm_judge",
+    "reason": "The claim uses the exact incident ID given in the source text.",
+    "is_injected_fabrication": false
+  },
+  {
+    "worker_id": "ridgeline_auth_r5",
+    "source": "ridgeline_auth_postmortem.txt",
+    "text": "Approximately 6% of session-refresh requests failed during the 22-minute incident window",
+    "quote": "Approximately 6% of session-refresh requests failed during the 22-minute incident window",
+    "verdict": "confirmed",
+    "method": "deterministic",
+    "reason": "quote round-trips into the live-refetched source",
+    "is_injected_fabrication": false
+  },
+  {
+    "worker_id": "ridgeline_auth_r5",
+    "source": "ridgeline_auth_postmortem.txt",
+    "text": "The batch job was identified via connection-pool saturation alerts at 20:11 UTC and killed at 20:14 UTC, after which the connection pool recovered automatically within 10 minutes.",
+    "quote": "The batch job was identified via connection-pool saturation alerts at 20:11 UTC and killed at 20:14 UTC, after which the connection pool recovered automatically within 10 minutes.",
+    "verdict": "confirmed",
+    "method": "deterministic",
+    "reason": "quote round-trips into the live-refetched source",
+    "is_injected_fabrication": false
+  },
+  {
+    "worker_id": "ridgeline_auth_r6",
+    "source": "ridgeline_auth_postmortem.txt",
+    "text": "Approximately 6% of session-refresh requests failed during the 22-minute incident window.",
+    "quote": "Approximately 6% of session-refresh requests failed during the 22-minute incident window;",
+    "verdict": "confirmed",
+    "method": "deterministic",
+    "reason": "quote round-trips into the live-refetched source",
+    "is_injected_fabrication": false
+  },
+  {
+    "worker_id": "ridgeline_auth_r6",
+    "source": "ridgeline_auth_postmortem.txt",
+    "text": "The batch job was identified via connection-pool saturation alerts at 20:11 UTC and killed at 20:14 UTC, after which the connection pool recovered automatically within 10 minutes.",
+    "quote": "The batch job was identified via connection-pool saturation alerts at 20:11 UTC and killed at 20:14 UTC, after which the connection pool recovered automatically within 10 minutes.",
+    "verdict": "confirmed",
+    "method": "deterministic",
+    "reason": "quote round-trips into the live-refetched source",
+    "is_injected_fabrication": false
+  },
+  {
+    "worker_id": "ridgeline_auth_r6",
+    "source": "ridgeline_auth_postmortem.txt",
+    "text": "Ridgeline Auth is adding a hard connection-count cap to all batch jobs and a separate, smaller connection pool reserved exclusively for the session-refresh endpoint.",
+    "quote": "Ridgeline Auth is adding a hard connection-count cap to all batch jobs and a separate, smaller connection pool reserved exclusively for the session-refresh endpoint.",
+    "verdict": "confirmed",
+    "method": "deterministic",
+    "reason": "quote round-trips into the live-refetched source",
+    "is_injected_fabrication": false
+  },
+  {
+    "worker_id": "ridgeline_auth_r7",
+    "source": "ridgeline_auth_postmortem.txt",
+    "text": "The incident affected approximately 6% of session-renew requests.",
+    "quote": "6% of session-refresh requests failed",
+    "verdict": "confirmed",
+    "method": "deterministic",
+    "reason": "quote round-trips into the live-refetched source",
+    "is_injected_fabrication": false
+  },
+  {
+    "worker_id": "ridgeline_auth_r7",
+    "source": "ridgeline_auth_postmortem.txt",
+    "text": "The batch job issue caused errors starting at 20:02 UTC until it was resolved at 20:14 UTC, a duration of 22 minutes.",
+    "quote": "Incident window; and killed at 20:14 UTC",
+    "verdict": "rejected",
+    "method": "computation",
+    "reason": "recomputed duration_minutes = 12, but claim asserts 22",
+    "is_injected_fabrication": false
+  },
+  {
+    "worker_id": "ridgeline_auth_r8",
+    "source": "ridgeline_auth_postmortem.txt",
+    "text": "Approximately 6% of session-refresh requests failed during the 22-minute incident window",
+    "quote": "\"3% of session-refresh requests failed during the 22-minute incident window; users with still-valid access tokens were not logged out, but token refresh for expiring sessions failed for affected users.",
+    "verdict": "rejected",
+    "method": "deterministic",
+    "reason": "quote does not appear in the source text, invented or altered",
+    "is_injected_fabrication": false
+  },
+  {
+    "worker_id": "ridgeline_auth_r9",
+    "source": "ridgeline_auth_postmortem.txt",
+    "text": "Approximately 6% of session-refresh requests failed during the 22-minute incident window.",
+    "quote": "Approximately 6% of session-refresh requests failed during the 22-minute incident window; users with still-valid access tokens were not logged out, but token refresh for expiring sessions failed for affected users.",
+    "verdict": "confirmed",
+    "method": "deterministic",
+    "reason": "quote round-trips into the live-refetched source",
+    "is_injected_fabrication": false
+  },
+  {
+    "worker_id": "ridgeline_auth_r10",
+    "source": "ridgeline_auth_postmortem.txt",
+    "text": "At 20:02 UTC on 2026-07-15, Ridgeline Auth's session-refresh endpoint began returning elevated 500 errors",
+    "quote": null,
+    "verdict": "confirmed",
+    "method": "llm_judge",
+    "reason": "The SOURCE text directly reports that at 20:02 UTC on 2026-07-15, Ridgeline Auth's session-refresh endpoint began returning elevated 500 errors.",
+    "is_injected_fabrication": false
+  },
+  {
+    "worker_id": "ridgeline_auth_r10",
+    "source": "ridgeline_auth_postmortem.txt",
+    "text": "Approximately 6% of session-refresh requests failed during the 22-minute incident window",
+    "quote": "Approximately 6% of session-refresh requests failed during the 22-minute incident window",
+    "verdict": "rejected",
+    "method": "computation",
+    "reason": "operand 0 quote does not appear in the source text: 'None'",
+    "is_injected_fabrication": false
+  },
+  {
+    "worker_id": "ridgeline_auth_r10",
+    "source": "ridgeline_auth_postmortem.txt",
+    "text": "The batch job was identified via connection-pool saturation alerts at 20:11 UTC and killed at 20:14 UTC.",
+    "quote": "The batch job was identified via connection-pool saturation alerts at 20:11 UTC and killed at 20:14 UTC.",
+    "verdict": "rejected",
+    "method": "deterministic",
+    "reason": "quote does not appear in the source text, invented or altered",
+    "is_injected_fabrication": false
+  },
+  {
+    "worker_id": "ridgeline_auth_r11",
+    "source": "ridgeline_auth_postmortem.txt",
+    "text": "Incident window was 22 minutes",
+    "quote": "Approximately 6% of session-refresh requests failed during the 22-minute incident window;",
+    "verdict": "confirmed",
+    "method": "deterministic",
+    "reason": "quote round-trips into the live-refetched source",
+    "is_injected_fabrication": false
+  },
+  {
+    "worker_id": "ridgeline_auth_r11",
+    "source": "ridgeline_auth_postmortem.txt",
+    "text": "Database connection pool became saturated",
+    "quote": "a misconfigured batch job that opened connections without releasing them exhausted the database connection pool",
+    "verdict": "rejected",
+    "method": "deterministic",
+    "reason": "quote does not appear in the source text, invented or altered",
+    "is_injected_fabrication": false
+  },
+  {
+    "worker_id": "ridgeline_auth_r11",
+    "source": "ridgeline_auth_postmortem.txt",
+    "text": "Action taken to resolve was killing the offending job",
+    "quote": "The batch job was identified via connection-pool saturation alerts at 20:11 UTC and killed at 20:14 UTC,",
+    "verdict": "confirmed",
+    "method": "deterministic",
+    "reason": "quote round-trips into the live-refetched source",
+    "is_injected_fabrication": false
+  },
+  {
+    "worker_id": "ridgeline_auth_r11",
+    "source": "ridgeline_auth_postmortem.txt",
+    "text": "Resolution took about 10 minutes.",
+    "quote": "after which the connection pool recovered automatically within 10 minutes.",
+    "verdict": "confirmed",
+    "method": "deterministic",
+    "reason": "quote round-trips into the live-refetched source",
+    "is_injected_fabrication": false
+  },
+  {
+    "worker_id": "cobalt_storage_r1",
+    "source": "cobalt_storage_postmortem.txt",
+    "text": "a degraded disk was the root cause.",
+    "quote": "<span class=\"highlight/degraded-disk';>> failed hardware",
+    "verdict": "rejected",
+    "method": "deterministic",
+    "reason": "quote does not appear in the source text, invented or altered",
+    "is_injected_fabrication": false
+  },
+  {
+    "worker_id": "cobalt_storage_r1",
+    "source": "cobalt_storage_postmortem.txt",
+    "text": "the degraded node was removed from service on 2026-07-29 at 03:41 UTC.",
+    "quote": "<span class=\"7* nodes, a specific instance of degradation\">03:41.",
+    "verdict": "rejected",
+    "method": "deterministic",
+    "reason": "quote does not appear in the source text, invented or altered",
+    "is_injected_fabrication": false
+  },
+  {
+    "worker_id": "cobalt_storage_r1",
+    "source": "cobalt_storage_postmortem.txt",
+    "text": "the degraded node was detected 51 minutes after the issue began due to high read latency.",
+    "quote": "<span class=\"6!min/issues, a specific instance of detection lag\">03:31.",
+    "verdict": "rejected",
+    "method": "deterministic",
+    "reason": "quote does not appear in the source text, invented or altered",
+    "is_injected_fabrication": false
+  },
+  {
+    "worker_id": "cobalt_storage_r1",
+    "source": "cobalt_storage_postmortem.txt",
+    "text": "approximately 3% of requests experienced excessive latencies over a 51-minute period.",
+    "quote": "<span class=\"6!min/issues, a specific instance of latency impact\">02:50 on 29 Jul 2026.",
+    "verdict": "rejected",
+    "method": "deterministic",
+    "reason": "quote does not appear in the source text, invented or altered",
+    "is_injected_fabrication": false
+  },
+  {
+    "worker_id": "cobalt_storage_r1",
+    "source": "cobalt_storage_postmortem.txt",
+    "text": "no data was lost since Cobalt Storage implements three-way replication.",
+    "quote": "<span class=\"highlight/replicated-three-ways';>: no loss",
+    "verdict": "rejected",
+    "method": "deterministic",
+    "reason": "quote does not appear in the source text, invented or altered",
+    "is_injected_fabrication": false
+  },
+  {
+    "worker_id": "cobalt_storage_r2",
+    "source": "cobalt_storage_postmortem.txt",
+    "text": "Approximately 3% of read requests routed to that node experienced latency above 2 seconds, versus a normal p99 of 80 milliseconds, for a duration of 51 minutes.",
+    "quote": "Approximately 3% of read requests routed to that node experienced latency above 2 seconds, versus a normal p99 of 80 milliseconds, for a duration of 51 minutes.",
+    "verdict": "confirmed",
+    "method": "deterministic",
+    "reason": "quote round-trips into the live-refetched source",
+    "is_injected_fabrication": false
+  },
+  {
+    "worker_id": "cobalt_storage_r3",
+    "source": "cobalt_storage_postmortem.txt",
+    "text": "Approximately 3% of read requests routed to that node experienced latency above 2 seconds, versus a normal p99 of 80 milliseconds",
+    "quote": "Approximately 3% of read requests routed to that node experienced latency above 2 seconds, versus a normal p99 of 80 milliseconds",
+    "verdict": "confirmed",
+    "method": "deterministic",
+    "reason": "quote round-trips into the live-refetched source",
+    "is_injected_fabrication": false
+  },
+  {
+    "worker_id": "cobalt_storage_r4",
+    "source": "cobalt_storage_postmortem.txt",
+    "text": "The degraded storage node caused approximately 3% of read requests to experience high latency, with some exceeding 2 seconds.",
+    "quote": "Approximately 3% of read requests routed to that node experienced latency above 2 seconds,",
+    "verdict": "confirmed",
+    "method": "deterministic",
+    "reason": "quote round-trips into the live-refetched source",
+    "is_injected_fabrication": false
+  },
+  {
+    "worker_id": "cobalt_storage_r5",
+    "source": "cobalt_storage_postmortem.txt",
+    "text": "A single storage node in the cluster began returning elevated read latency due to a failing disk.",
+    "quote": "beginning at 02:50 UTC on 2026-07-29, a single storage node in Cobalt Storage's eu-central-1 cluster began returning elevated read latency after a failing disk began retrying reads at the hardware level",
+    "verdict": "rejected",
+    "method": "deterministic",
+    "reason": "quote does not appear in the source text, invented or altered",
+    "is_injected_fabrication": false
+  },
+  {
+    "worker_id": "cobalt_storage_r5",
+    "source": "cobalt_storage_postmortem.txt",
+    "text": "Approximately 3% of read requests to that node experienced latency above 2 seconds.",
+    "quote": "Approximately 3% of read requests routed to that node experienced latency above 2 seconds,",
+    "verdict": "confirmed",
+    "method": "deterministic",
+    "reason": "quote round-trips into the live-refetched source",
+    "is_injected_fabrication": false
+  },
+  {
+    "worker_id": "cobalt_storage_r5",
+    "source": "cobalt_storage_postmortem.txt",
+    "text": "The degraded node was fully removed from service after being drained for about an hour.",
+    "quote": "drained from the read path at 03:41 UTC",
+    "verdict": "confirmed",
+    "method": "deterministic",
+    "reason": "quote round-trips into the live-refetched source",
+    "is_injected_fabrication": false
+  },
+  {
+    "worker_id": "cobalt_storage_r5",
+    "source": "cobalt_storage_postmortem.txt",
+    "text": "Cobalt Storage will add automatic drain trigger to handle a failing disk situation better in future.",
+    "quote": "adding an automatic drain trigger for any node exceeding p99 read latency of 500 milliseconds for more than 5 minutes,",
+    "verdict": "rejected",
+    "method": "deterministic",
+    "reason": "quote does not appear in the source text, invented or altered",
+    "is_injected_fabrication": false
+  },
+  {
+    "worker_id": "cobalt_storage_r6",
+    "source": "cobalt_storage_postmortem.txt",
+    "text": "Approximately 3% of read requests routed to that node experienced latency above 2 seconds",
+    "quote": "\u27e8approximately 3% of read requests routed to that node experienced latency above 2 seconds\u27e9",
+    "verdict": "rejected",
+    "method": "deterministic",
+    "reason": "quote does not appear in the source text, invented or altered",
+    "is_injected_fabrication": false
+  },
+  {
+    "worker_id": "cobalt_storage_r6",
+    "source": "cobalt_storage_postmortem.txt",
+    "text": "for a duration of 51 minutes",
+    "quote": null,
+    "verdict": "rejected",
+    "method": "computation",
+    "reason": "operand 0 quote does not appear in the source text: 'None'",
+    "is_injected_fabrication": false
+  },
+  {
+    "worker_id": "cobalt_storage_r7",
+    "source": "cobalt_storage_postmortem.txt",
+    "text": "Approximately 3% of read requests routed to that node experienced latency above 2 seconds, versus a normal p99 of 80 milliseconds",
+    "quote": "Approximately 3% of read requests routed to that node experienced latency above 2 seconds, versus a normal p99 of 80 milliseconds",
+    "verdict": "confirmed",
+    "method": "deterministic",
+    "reason": "quote round-trips into the live-refetched source",
+    "is_injected_fabrication": false
+  },
+  {
+    "worker_id": "cobalt_storage_r7",
+    "source": "cobalt_storage_postmortem.txt",
+    "text": "for a duration of 51 minutes",
+    "quote": null,
+    "verdict": "unverified",
+    "method": "fail_closed",
+    "reason": "unsupported or unparseable computation: 'duration_minutes' over ['51 minutes']",
+    "is_injected_fabrication": false
+  },
+  {
+    "worker_id": "cobalt_storage_r7",
+    "source": "cobalt_storage_postmortem.txt",
+    "text": "Cobalt Storage is lowering its node health-check latency threshold and adding an automatic drain trigger for any node exceeding p99 read latency of 500 milliseconds for more than 5 minutes.",
+    "quote": null,
+    "verdict": "confirmed",
+    "method": "llm_judge",
+    "reason": "The claim directly quotes the given SOURCE text.",
+    "is_injected_fabrication": false
+  },
+  {
+    "worker_id": "cobalt_storage_r8",
+    "source": "cobalt_storage_postmortem.txt",
+    "text": "Approximately 3% of read requests routed to that node experienced latency above 2 seconds, versus a normal p99 of 80 milliseconds.",
+    "quote": "Approximately 3% of read requests routed to that node experienced latency above 2 seconds, versus a normal p99 of 80 milliseconds.",
+    "verdict": "rejected",
+    "method": "deterministic",
+    "reason": "quote does not appear in the source text, invented or altered",
+    "is_injected_fabrication": false
+  },
+  {
+    "worker_id": "cobalt_storage_r9",
+    "source": "cobalt_storage_postmortem.txt",
+    "text": "Approximately 3% of read requests routed to that node experienced latency above 2 seconds, versus a normal p99 of 80 milliseconds, for a duration of 51 minutes.",
+    "quote": "\"Approximately 3% of read requests routed to that node experienced latency above 2 seconds, versus a normal p99 of 80 milliseconds, for a duration of 51 minutes.",
+    "verdict": "rejected",
+    "method": "deterministic",
+    "reason": "quote does not appear in the source text, invented or altered",
+    "is_injected_fabrication": false
+  },
+  {
+    "worker_id": "cobalt_storage_r9",
+    "source": "cobalt_storage_postmortem.txt",
+    "text": "The degraded node was identified through per-node latency percentile alerting at 03:31 UTC and drained from the read path at 03:41 UTC.",
+    "quote": "\"The degraded node was identified through per-node latency percentile alerting at 03:31 UTC and drained from the read path at 03:41 UTC.",
+    "verdict": "rejected",
+    "method": "deterministic",
+    "reason": "quote does not appear in the source text, invented or altered",
+    "is_injected_fabrication": false
+  },
+  {
+    "worker_id": "cobalt_storage_r10",
+    "source": "cobalt_storage_postmortem.txt",
+    "text": "3% of read requests routed to that node experienced latency above 2 seconds, versus a normal p99 of 80 milliseconds, for a duration of 51 minutes.",
+    "quote": "3% of read requests routed to that node experienced latency above 2 seconds, versus a normal p99 of 80 milliseconds, for a duration of 51 minutes.",
+    "verdict": "confirmed",
+    "method": "deterministic",
+    "reason": "quote round-trips into the live-refetched source",
+    "is_injected_fabrication": false
+  },
+  {
+    "worker_id": "cobalt_storage_r11",
+    "source": "cobalt_storage_postmortem.txt",
+    "text": "Approximately 3% of read requests routed to that node experienced latency above 2 seconds, versus a normal p99 of 80 milliseconds",
+    "quote": "Approximately 3% of read requests routed to that node experienced latency above 2 seconds, versus a normal p99 of 80 milliseconds.",
+    "verdict": "rejected",
+    "method": "deterministic",
+    "reason": "quote does not appear in the source text, invented or altered",
+    "is_injected_fabrication": false
+  },
+  {
+    "worker_id": "cobalt_storage_r11",
+    "source": "cobalt_storage_postmortem.txt",
+    "text": "for a duration of 51 minutes",
+    "quote": "for a duration of 51 minutes",
+    "verdict": "confirmed",
+    "method": "deterministic",
+    "reason": "quote round-trips into the live-refetched source",
+    "is_injected_fabrication": false
+  },
+  {
+    "worker_id": "cobalt_storage_r11",
+    "source": "cobalt_storage_postmortem.txt",
+    "text": "The degraded node was identified through per-node latency percentile alerting at 03:31 UTC and drained from the read path at 03:41 UTC",
+    "quote": "The degraded node was identified through per-node latency percentile alerting at 03:31 UTC and drained from the read path at 03:41 UTC",
+    "verdict": "confirmed",
+    "method": "deterministic",
+    "reason": "quote round-trips into the live-refetched source",
+    "is_injected_fabrication": false
+  },
+  {
+    "worker_id": "cobalt_storage_r11",
+    "source": "cobalt_storage_postmortem.txt",
+    "text": "Cobalt Storage is lowering its node health-check latency threshold and adding an automatic drain trigger for any node exceeding p99 read latency of 500 milliseconds for more than 5 minutes.",
+    "quote": null,
+    "verdict": "rejected",
+    "method": "computation",
+    "reason": "recomputed sum = 104.0, but claim asserts 1",
+    "is_injected_fabrication": false
+  },
+  {
+    "worker_id": "injected_by_script",
+    "source": "meridian_cache_postmortem.txt",
+    "text": "Meridian Cache's stale-content incident exposed customer payment data.",
+    "quote": "customer payment data was exposed during the stale-content incident",
+    "verdict": "rejected",
+    "method": "deterministic",
+    "reason": "quote does not appear in the source text, invented or altered",
+    "is_injected_fabrication": true
+  },
+  {
+    "worker_id": "injected_by_script",
+    "source": "anchor_cdn_postmortem.txt",
+    "text": "Anchor CDN's certificate incident affected all customer hostnames, not just api.anchorcdn.net.",
+    "quote": null,
+    "verdict": "rejected",
+    "method": "llm_judge",
+    "reason": "The source text explicitly states that only traffic to the specific hostname 'api.anchorcdn.net' was affected; traffic to other Anchor CDN hostnames was unaffected.",
+    "is_injected_fabrication": true
+  },
+  {
+    "worker_id": "injected_by_script",
+    "source": "solace_queue_postmortem.txt",
+    "text": "Solace Queue permanently lost 340,000 order-event messages during the backlog.",
+    "quote": "340,000 order-event messages were permanently lost",
+    "verdict": "rejected",
+    "method": "deterministic",
+    "reason": "quote does not appear in the source text, invented or altered",
+    "is_injected_fabrication": true
+  },
+  {
+    "worker_id": "injected_by_script",
+    "source": "ridgeline_auth_postmortem.txt",
+    "text": "Ridgeline Auth's connection pool exhaustion caused a full site-wide outage lasting six hours.",
+    "quote": null,
+    "verdict": "rejected",
+    "method": "llm_judge",
+    "reason": "The source states that the incident window lasted 22 minutes.",
+    "is_injected_fabrication": true
+  },
+  {
+    "worker_id": "injected_by_script",
+    "source": "cobalt_storage_postmortem.txt",
+    "text": "Cobalt Storage lost customer data because only one replica of each object existed.",
+    "quote": "only one replica of each object existed",
+    "verdict": "rejected",
+    "method": "deterministic",
+    "reason": "quote does not appear in the source text, invented or altered",
+    "is_injected_fabrication": true
+  }
+]

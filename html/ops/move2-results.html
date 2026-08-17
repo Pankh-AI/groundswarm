@@ -1,0 +1,225 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Groundswarm &mdash; Move 2: Verified Beats Plausible, measured</title>
+<style>
+  :root{--bg:#0f1115;--fg:#e6e9ef;--dim:#98a2b3;--card:#171a21;--line:#252a34;
+        --good:#3fb950;--bad:#f85149;--warn:#d29922;--acc:#58a6ff}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--fg);
+       font:15px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+  .wrap{max-width:1080px;margin:0 auto;padding:28px 20px 80px}
+  h1{font-size:24px;margin:0 0 4px} h2{font-size:17px;margin:30px 0 8px;color:var(--acc)}
+  .dim{color:var(--dim)} .small{font-size:13px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:16px 18px;margin:14px 0}
+  table{border-collapse:collapse;width:100%;font-size:13.5px;margin:10px 0}
+  .scroll{overflow-x:auto}
+  th,td{border-bottom:1px solid var(--line);padding:8px 9px;text-align:left;vertical-align:top}
+  th{color:var(--dim);font-weight:600;font-size:12px;text-transform:uppercase;letter-spacing:.03em}
+  code{background:#0b0d11;padding:1px 5px;border-radius:4px;font-size:13px}
+  a{color:var(--acc)}
+  .back{font-size:13px;margin-bottom:18px;display:inline-block}
+  .lead{font-size:15.5px;border-left:3px solid var(--acc);padding-left:14px;margin:16px 0}
+  .tag{display:inline-block;padding:2px 8px;border-radius:99px;font-size:11.5px;font-weight:700}
+  .t-done{background:#123018;color:var(--good)} .t-fail{background:#3a1418;color:var(--bad)}
+  .t-warn{background:#33280a;color:var(--warn)}
+  .num{text-align:right;font-variant-numeric:tabular-nums}
+  .stat{display:inline-block;min-width:170px;margin:6px 22px 6px 0}
+  .stat b{display:block;font-size:20px} .stat span{color:var(--dim);font-size:12px}
+  .quote{font-family:ui-monospace,Consolas,monospace;font-size:12.5px;background:#0b0d11;
+         padding:6px 8px;border-radius:6px;display:block;margin-top:4px;color:#c9d1d9;white-space:pre-wrap}
+  .good{color:var(--good)} .bad{color:var(--bad)} .warn{color:var(--warn)}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<a class="back" href="../index.html">&larr; Groundswarm hub</a>
+<h1>Move 2 &mdash; Verified Beats Plausible, measured</h1>
+<div class="dim">ADR-010/012's Move 2: a fixed, hand-authored 30-claim ground-truth corpus (5 sources
+&times; 6 categories) scored across three conditions &mdash; <b>groundswarm</b> (swarm + Verifier, only
+<code>confirmed</code> reported), <b>swarm_no_verification</b> (identical extraction, everything reported
+unconditionally, Verifier never called), <b>single_agent</b> (one call across all 5 sources concatenated,
+no decomposition, no verification) &mdash; run twice live against a remote dolphin3:latest (ngrok-tunneled
+Colab GPU). Raw numbers: <a href="move2-benchmark.html">observability page</a>; full per-claim log:
+<code>move2_benchmark_claims.json</code>.</div>
+
+<div class="lead">
+The honest headline: verification is <b class="good">the entire effect</b>, not a marginal improvement.
+Both unverified conditions leaked <b class="bad">100% of injected bad claims, both runs</b> (40/40 across
+run 1 + run 2 combined) &mdash; by construction, since neither ever checks anything, but that also confirms
+the ground-truth corpus's bad claims really do survive extraction and would reach a reader if nothing
+gated them. groundswarm caught <b class="good">39 of 40</b> (97.5%) with <b class="good">zero false
+rejections</b> of true claims across both runs. The one miss, and a live instance of a gap already on
+record in <a href="../caveats/limitations.html">Limitations</a>, are both reported below rather than
+folded into the headline number.
+</div>
+
+<h2>What happened, in order</h2>
+<div class="card small">
+<b>Infra note:</b> the original Colab/Cloudflare tunnel died mid-session (HTTP 530) and the
+<code>colab-mcp</code> browser bridge would not reconnect &mdash; an infra blocker, not a code one. Both
+runs below used a separately-launched Colab instance (ngrok, reserved domain, plain HTTP to
+<code>OLLAMA_HOST</code>) that never depended on the broken browser bridge at all.<br><br>
+<b>Run 1</b> &mdash; swarm extracted 13 real claims. groundswarm leaked 1/20 bad claims (one
+<code>unverifiable</code> ground-truth claim was <code>confirmed</code> by the LLM-judge fallback instead
+of rejected). Exit code 1 &mdash; correct, designed behavior: <code>main()</code> returns non-zero exactly
+when not every bad claim was caught, the same convention <code>run_scenario_sweep.py</code> uses. Not a
+script bug; a real, substantive finding about judge-path reliability, reported honestly below rather than
+discarded and re-run until clean.<br><br>
+<b>Run 2</b> &mdash; swarm extracted 20 real claims (same code, same corpus, sampling variance only).
+groundswarm leaked 0/20. Per-claim diagnostic logging (<code>move2_benchmark_claims.json</code>) was added
+between the two runs specifically to be able to read individual claims against source rather than trust
+the aggregate numbers alone &mdash; the analysis below is built from that log.
+</div>
+
+<h2>Headline comparison</h2>
+<div class="card">
+<div class="stat"><b class="good">39 / 40</b><span>bad claims caught by groundswarm, both runs combined</span></div>
+<div class="stat"><b class="bad">40 / 40</b><span>bad claims leaked by swarm_no_verification and single_agent, both runs</span></div>
+<div class="stat"><b class="good">0 / 20</b><span>false rejections of true claims, groundswarm, both runs</span></div>
+<div class="stat"><b>13 &rarr; 20</b><span>real claims extracted (sampling variance, not a code change)</span></div>
+<div class="stat"><b>8,079 tok / 103.8s</b><span>groundswarm total cost, run 2 (17 calls)</span></div>
+</div>
+
+<div class="scroll"><table><thead>
+<tr><th></th><th>groundswarm</th><th>swarm_no_verification</th><th>single_agent</th></tr>
+</thead><tbody>
+<tr><td>Bad claims leaked (run 1 / run 2)</td><td class="num">1/20 &rarr; 0/20</td><td class="num">20/20 &rarr; 20/20</td><td class="num">20/20 &rarr; 20/20</td></tr>
+<tr><td>False rejections (run 1 / run 2)</td><td class="num">0/10 &rarr; 0/10</td><td class="num">0/10 &rarr; 0/10</td><td class="num">0/10 &rarr; 0/10</td></tr>
+<tr><td>Checklist items missed (run 1 / run 2)</td><td class="num">8/10 &rarr; 8/10</td><td class="num">8/10 &rarr; 8/10</td><td class="num">8/10 &rarr; 10/10</td></tr>
+<tr><td>Compute, run 2</td><td class="num">17 calls / 8,079 tok / 103.8s</td><td class="num">6 calls / 4,336 tok / 76.4s</td><td class="num">1 call / 1,828 tok / 25.8s</td></tr>
+</tbody></table></div>
+
+<h2>1. Verification is the entire effect, by construction and by measurement</h2>
+<div class="card">
+swarm_no_verification reuses <i>exactly</i> the same extraction output as groundswarm &mdash; same
+workers, same claims, same sampling &mdash; and just reports everything unconditionally instead of
+routing it through the Verifier. It leaked <b>20/20 bad claims in both runs</b>, every category, both
+times. single_agent, extracting independently with no decomposition, did the same. This isn't a
+weak-baseline artifact: it's confirmation that the 20 injected bad claims (unsupported, unverifiable,
+wrong_attribution, incorrect_computation) are genuinely present in what gets extracted and would reach a
+reader if nothing checked them &mdash; the corpus is doing its job, and the entire 39/40-vs-0/40 gap is
+attributable to the Verifier step, not to some upstream property of the extraction that quietly filters
+bad claims before verification even runs.
+</div>
+
+<h2>2. The one leak: judge-path variance, not a systemic hole</h2>
+<div class="card">
+Run 1's single leak was an <code>unverifiable</code> ground-truth claim, confirmed instead of rejected.
+<code>unverifiable</code> claims have no <code>quote</code> or <code>computation</code> field by design
+(that's what makes them unverifiable) &mdash; they resolve entirely through the LLM-judge fallback, the
+one non-deterministic path in <code>Verifier.verify_claim()</code>. Run 2, identical code and corpus, ran
+this same claim through the judge again and it was correctly rejected. This is consistent with this
+project's own established finding (<a href="move1-revalidation.html">Move 1</a>, ADR-013) that a single
+run is a sample, not a stable estimate &mdash; here it shows up specifically on the judge path, the one
+place in the verifier where that variance has anywhere to hide. It does <i>not</i> show up on the
+deterministic quote-match or computation paths in either run: 0 false confirms there, both times.
+</div>
+
+<h2>3. A live instance of the EVIDENCE_VALID vs. CLAIM_VALID gap</h2>
+<div class="card">
+<a href="../caveats/limitations.html">Limitations</a> already documents, as a confirmed-real (not
+hypothetical) gap: <code>quote_round_trips()</code> proves a quote is genuine, not that it entails the
+claim's text. Move 2's real (non-injected) swarm claims produced three concrete instances of exactly this
+shape &mdash; a claim with a real, verbatim-matching quote attached, whose <i>free-text</i> asserts a
+number the quote doesn't actually establish and no <code>computation</code> field was populated to check:
+<div class="quote">anchor_cdn: "Manual intervention resolved the issue in 14 minutes" &mdash; quote covers
+06:19&ndash;06:34 UTC verbatim (real), but the source's own timestamps put the fix at 15 minutes, not 14.
+CONFIRMED anyway.
+
+ridgeline_auth: "The batch job was running for 12 minutes before being killed" &mdash; quote is an
+unrelated alert timestamp (real), 12 minutes happens to be arithmetically correct. CONFIRMED &mdash; right
+number, but by luck, not by the mechanism that fired.
+
+ridgeline_auth: "Killing the job took 2 minutes" &mdash; quote is a real, unrelated sentence about pool
+recovery; the source gives no basis anywhere for "2 minutes." CONFIRMED anyway.</div>
+Two of these three are a genuinely wrong number sailing through as <code>confirmed</code>, not a near-miss
+&mdash; live, un-injected dolphin3 output reproducing a gap the project had previously only demonstrated
+with a hand-built example. This is exactly the boundary ADR-011's planned <code>EVIDENCE_VALID</code> vs.
+<code>CLAIM_VALID</code> gate split is meant to close; Move 2 gives it its first measured real-world
+instances rather than a constructed one.
+</div>
+
+<h2>4. The known quote-paraphrasing false-rejection pattern reproduces</h2>
+<div class="card">
+Of run 2's 20 real swarm claims, 13 confirmed and 7 rejected. Reading all 7 individually against source:
+<b>3 are pure punctuation drift on true content</b> &mdash; a comma the worker inserted or dropped, or a
+period added at a clause boundary the source doesn't actually break on (solace_queue's "backlog reached
+340,000", solace_queue's "receiver identified at 12:03 UTC", ridgeline_auth's "3 minutes after
+identification" &mdash; the last of which is also a <i>correct</i> derived number, rejected purely on
+formatting). <b>1 is garbled phrasing</b> that changes enough words to legitimately fail an exact match
+(solace_queue: "delivering order-event by" vs. the source's "delaying order-event delivery"). <b>2 are the
+worker fabricating or misconstructing evidence</b> &mdash; ridgeline_auth's "22-minute incident window"
+synthesizes a timestamp ("20:24") that never appears in source; meridian_cache's "resolved in 27 minutes"
+pairs a genuine fact (the source does state a 27-minute total) with an altered, non-matching operand
+quote. <b>1 is a malformed computation payload</b> (cobalt_storage: an operand missing its
+<code>quote</code> key entirely) &mdash; correctly <code>unverified</code>/<code>fail_closed</code>
+regardless of whether "51 minutes" is true. Same composition as <a href="move1-revalidation.html">Move
+1</a>: the rejection count is dominated by quote-fidelity friction on true claims, not by the verifier
+missing genuine content errors.
+</div>
+
+<h2>5. Omission is real and systematically asymmetric &mdash; not a heuristic artifact</h2>
+<div class="card">
+groundswarm/swarm_no_verification missed 8 of 10 checklist items in both runs. Read against the raw
+claims log rather than trusted as a bare number: the 2 <i>covered</i> items in run 2 (anchor_cdn's and
+ridgeline_auth's duration facts) were genuinely present &mdash; the keywords showed up in real claims'
+combined text+quote. The 8 <i>missed</i> items split into two distinct failure shapes:
+<ul>
+<li><b>6 of 8 are negative / scope-limiting facts</b> &mdash; "only X was affected, other hostnames
+weren't," "no write requests were affected, no data was lost," "no customer data was exposed," "valid
+tokens were not logged out," "no messages were dropped." None of these appear in <i>any</i> real claim
+from <i>any</i> worker, in either run. This isn't a keyword-matching miss on a paraphrase &mdash; the
+workers simply never extracted an absence claim at all, in 5 sources and 2 independent runs.</li>
+<li><b>2 of 8 are duration numbers</b> the worker either attempted and had rejected on a construction
+error (meridian_cache's 27-minute claim, finding 4 above) or never attempted a computation for at all
+(solace_queue's 8-minute detect-to-throttle gap).</li>
+</ul>
+The negative-fact gap is the more important one: it reproduces identically across both runs and hits
+<i>all three conditions</i> equally (A and B share extraction; single_agent misses 8/10 and 10/10 &mdash;
+never better). It is not something the Verifier can fix &mdash; it can only judge claims that exist, and
+no worker is producing "X was not affected" as a claim shape at all. The likely cause is that the
+extraction prompt asks "what happened," and absence-of-impact is exactly the kind of fact that framing
+doesn't surface. The closure direction is a prompting fix, not a verification one: an explicit
+"what was <i>not</i> affected / what did <i>not</i> happen" extraction pass or checklist, tested the same
+way the quote-discipline fix was &mdash; live re-run, not assumed.
+</div>
+
+<h2>Methodological caveats</h2>
+<div class="card small">
+<b>Single/double-run point estimates aren't stable.</b> Real claim count moved 13&rarr;20 and the leak
+count moved 1/20&rarr;0/20 between two runs of identical code and corpus &mdash; consistent with Move 1's
+already-established finding that dolphin3 sampling variance alone produces double-digit-percent swings.
+Both runs are reported above; neither is cherry-picked.<br><br>
+<b><code>omission_rate()</code> is a keyword heuristic, not semantic matching</b>, and it checks coverage
+across <i>all</i> of a source's real claims combined, not whether any single claim states a fact coherently
+&mdash; e.g. ridgeline_auth's duration item counted "covered" because two separate claims' quotes jointly
+contained both timestamps, not because one claim stated the duration correctly. This makes the metric more
+generous than a stricter per-claim check would be, which is why the negative-fact gap (finding 5) is
+reported by reading the raw claims directly rather than trusting the aggregate number alone.<br><br>
+<b>wrong_attribution claims are caught by the existing <code>EVIDENCE_VALID</code> mechanism, not a new
+one.</b> All 5 rejected cleanly because the substituted quote genuinely isn't verbatim in that claim's
+declared source. This is <i>not</i> the same as exercising ADR-011's planned <code>ATTRIBUTION_VALID</code>
+gate, which requires a worker exposed to multiple sources that could genuinely misattribute a real quote
+between them &mdash; Move 2's workers, like every prior scenario, still see exactly one source each.
+ADR-011 stays <span class="tag t-warn">Open</span>; this result doesn't close it.
+</div>
+
+<h2>What's next</h2>
+<div class="card small">
+Per ADR-012's definition of done, Move 2 now has a measured result, not just a built-and-pending harness:
+verification is confirmed to be the entire effect (39/40 vs. 0/40), at zero false-rejection cost, for a
+compute overhead of roughly 2&times; single_agent's token count and comparable wall time. Two concrete,
+scoped follow-ups came out of reading the real claims individually rather than trusting the aggregate
+score: (1) the EVIDENCE_VALID/CLAIM_VALID gap (finding 3) now has real instances to design ADR-011's gate
+split against, instead of only the hand-built example in Limitations; (2) the negative-fact omission gap
+(finding 5) is a prompting problem worth a targeted fix and a re-run, independent of and not gated on the
+ADR-011 work.
+</div>
+
+</div>
+</body>
+</html>
