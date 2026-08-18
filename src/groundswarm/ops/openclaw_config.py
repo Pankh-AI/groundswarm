@@ -28,6 +28,7 @@ from typing import Literal
 from .openclaw_manager import OpenClawGatewayManager
 
 Harness = Literal["direct", "codex", "claude_cli"]
+OpenAiAuthMode = Literal["api-key", "subscription"]
 
 DEFAULT_CLAUDE_MODEL = "claude-cli/claude-opus-5"
 DEFAULT_OLLAMA_MODEL = "ollama/dolphin3:latest"
@@ -65,11 +66,12 @@ def apply_harness(
     gateway_manager: OpenClawGatewayManager,
     *,
     agent_id: str = "dev",
+    openai_auth_mode: OpenAiAuthMode = "api-key",
     openai_api_key_env: str = "OPENAI_API_KEY",
     openai_model: str | None = None,
     claude_model: str = DEFAULT_CLAUDE_MODEL,
     ollama_model: str = DEFAULT_OLLAMA_MODEL,
-    timeout_s: float = 300.0,
+    timeout_s: float = 600.0,
 ) -> HarnessApplyResult:
     """Configures a stopped OpenClaw Gateway's `openclaw.json` so its next
     start() executes the requested harness. Idempotent: if the live config
@@ -79,12 +81,24 @@ def apply_harness(
     switched to codex/claude_cli stay that way forever on a later "direct"
     run since nothing would ever revert it.
 
-    Never writes a plaintext secret -- the codex harness's API key is stored
-    as an OpenClaw SecretRef (`{"source": "env", ...}`) that OpenClaw itself
-    resolves from the named environment variable at call time; the real key
-    value only needs to be set in this process's own environment, since
+    Never writes a plaintext secret -- when openai_auth_mode=="api-key" (the
+    default), the codex harness's API key is stored as an OpenClaw SecretRef
+    (`{"source": "env", ...}`) that OpenClaw itself resolves from the named
+    environment variable at call time; the real key value only needs to be
+    set in this process's own environment, since
     OpenClawGatewayManager.start() already forwards os.environ to the
     spawned Gateway subprocess.
+
+    openai_auth_mode=="subscription" skips the apiKey patch entirely --
+    `config patch --dry-run` eagerly resolves every SecretRef it's given
+    (confirmed live: it rejects the patch outright with "Environment
+    variable ... is missing or empty" if openai_api_key_env isn't set, even
+    though nothing about the actual codex CLI run needs it), so a
+    subscription-only host (`codex login` with a ChatGPT account, no
+    OPENAI_API_KEY at all -- OpenClaw's own auth-requirement matrix accepts
+    a "chatgpt" account whenever authRequirement is left unset, which this
+    patch never sets) could never get a patch applied at all under
+    "api-key"'s always-include-the-ref behavior.
     """
     if gateway_manager.is_available():
         raise OpenClawConfigGatewayRunningError(
@@ -95,6 +109,7 @@ def apply_harness(
     patch = _patch_for(
         harness,
         agent_id=agent_id,
+        openai_auth_mode=openai_auth_mode,
         openai_api_key_env=openai_api_key_env,
         openai_model=openai_model,
         claude_model=claude_model,
@@ -131,6 +146,7 @@ def _patch_for(
     harness: Harness,
     *,
     agent_id: str,
+    openai_auth_mode: OpenAiAuthMode,
     openai_api_key_env: str,
     openai_model: str | None,
     claude_model: str,
@@ -139,13 +155,15 @@ def _patch_for(
     if harness == "codex":
         if not openai_model:
             raise ValueError("codex harness requires openai_model (a catalog-known 'openai/<model>' ref)")
-        return {
+        patch = {
             "plugins": {"entries": {"codex": {"enabled": True}}},
-            "models": {"providers": {"openai": {
-                "apiKey": {"source": "env", "provider": "default", "id": openai_api_key_env},
-            }}},
             "agents": {"entries": {agent_id: {"model": openai_model}}},
         }
+        if openai_auth_mode == "api-key":
+            patch["models"] = {"providers": {"openai": {
+                "apiKey": {"source": "env", "provider": "default", "id": openai_api_key_env},
+            }}}
+        return patch
     if harness == "claude_cli":
         return {"agents": {"entries": {agent_id: {"model": claude_model}}}}
     if harness == "direct":

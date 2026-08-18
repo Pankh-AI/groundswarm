@@ -118,10 +118,23 @@ def test_codex_harness_requires_openai_model(tmp_path, monkeypatch):
 
 def test_codex_patch_never_carries_a_literal_secret():
     patch = _patch_for(
-        "codex", agent_id="dev", openai_api_key_env="OPENAI_API_KEY",
+        "codex", agent_id="dev", openai_auth_mode="api-key", openai_api_key_env="OPENAI_API_KEY",
         openai_model="openai/gpt-5.1", claude_model="claude-cli/claude-opus-5",
         ollama_model="ollama/dolphin3:latest",
     )
     api_key_field = patch["models"]["providers"]["openai"]["apiKey"]
     assert api_key_field == {"source": "env", "provider": "default", "id": "OPENAI_API_KEY"}
     assert "sk-" not in json.dumps(patch)
+
+
+def test_codex_subscription_auth_mode_omits_api_key_entirely():
+    patch = _patch_for(
+        "codex", agent_id="dev", openai_auth_mode="subscription", openai_api_key_env="OPENAI_API_KEY",
+        openai_model="openai/gpt-5.1", claude_model="claude-cli/claude-opus-5",
+        ollama_model="ollama/dolphin3:latest",
+    )
+    assert "models" not in patch
+    assert patch == {
+        "plugins": {"entries": {"codex": {"enabled": True}}},
+        "agents": {"entries": {"dev": {"model": "openai/gpt-5.1"}}},
+    }
