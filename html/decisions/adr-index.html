@@ -75,12 +75,18 @@ never matched the name this project should be published under and was deliberate
 </div>
 
 <div class="card">
-<div class="meta">ADR-005 <span class="tag t-open">Open</span></div>
-<h2>First proof-case domain</h2>
-README currently proposes vendor infrastructure incident monitoring (the same domain the
-grounding pattern was proven on in the capstone) as the first real Groundswarm use case, marked
-explicitly as "proposed, open to change."
-<p><b>Why open:</b> not yet confirmed or overridden.</p>
+<div class="meta">ADR-005 <span class="tag t-dec">Decided</span></div>
+<h2>First proof-case domain: vendor infrastructure incident monitoring</h2>
+Confirmed as the first real Groundswarm use case, no longer "proposed, open to change": a swarm of
+workers each reads a vendor's public incident postmortems, extracts and classifies findings, and the
+verifier confirms every claim against the live source before it reaches a risk briefing a real team
+could act on.
+<p><b>Why this domain, not left open any longer:</b> it's not a fresh choice being made now, it's the
+domain every measured result in this repo already ran against &mdash; the original capstone prototype,
+Move 2 (ADR-017), the 1x&ndash;200x N-worker sweep (ADR-015), the OpenClaw feedback loop (ADR-019), and
+the CLI harness calibration (ADR-020) all used incident-monitoring sources. Confirming it formally
+just names what the evidence already committed to, so the public-facing pitch (README, landing page)
+can point at one concrete demo instead of hedging on the use case while citing results from it.</p>
 </div>
 
 <div class="card">

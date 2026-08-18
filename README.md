@@ -98,12 +98,14 @@ the version that only had to work for one person.
 Early. This repository currently holds the architecture and licensing
 decisions; implementation is starting from here.
 
-**First proof case (proposed, open to change):** vendor infrastructure
-incident monitoring, the same domain the grounding pattern was first proven
-on: a swarm of workers each reads a vendor's public incident postmortems,
-extracts and classifies findings, and the verifier confirms every claim
-against the live source before it reaches a risk briefing a real team could
-act on.
+**First proof case (decided, ADR-005):** vendor infrastructure incident
+monitoring, the same domain the grounding pattern was first proven on: a
+swarm of workers each reads a vendor's public incident postmortems, extracts
+and classifies findings, and the verifier confirms every claim against the
+live source before it reaches a risk briefing a real team could act on. This
+is also the domain every measured result in this repo (Move 2, the N-worker
+sweep, the OpenClaw feedback loop, the CLI harness calibration) was run
+against.
 
 ## License
 
