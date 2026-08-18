@@ -27,6 +27,22 @@ workers, coordinated by an orchestration layer, whose combined output is
 independently re-checked against primary sources before anything is
 reported as fact.
 
+## Measured, not implied
+
+Run twice, live, against a real model — not simulated: with verification on,
+Groundswarm caught **39 of 40** injected bad claims (unsupported,
+unverifiable, wrong-source, wrong arithmetic) at **zero cost** in false
+rejections of true claims. The identical swarm with verification switched off,
+and a single-agent baseline with no decomposition at all, both leaked
+**40 of 40**. The gap is attributable entirely to the verification step:
+condition B reuses the exact same extraction output as condition A, so
+verification is the only variable between them.
+
+This is a real, runnable, Apache-2.0 benchmark, not a cited internal number —
+see [`benchmark/`](./benchmark/) to run it against your own framework, and
+[`html/ops/move2-results.html`](./html/ops/move2-results.html) for the full
+result including what it doesn't yet establish.
+
 ## How it works
 
 **Workers.** Each worker is an OpenClaw instance, configured with a bounded
