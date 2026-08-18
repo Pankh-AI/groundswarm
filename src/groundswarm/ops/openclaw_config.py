@@ -69,7 +69,7 @@ def apply_harness(
     openai_model: str | None = None,
     claude_model: str = DEFAULT_CLAUDE_MODEL,
     ollama_model: str = DEFAULT_OLLAMA_MODEL,
-    timeout_s: float = 180.0,
+    timeout_s: float = 300.0,
 ) -> HarnessApplyResult:
     """Configures a stopped OpenClaw Gateway's `openclaw.json` so its next
     start() executes the requested harness. Idempotent: if the live config

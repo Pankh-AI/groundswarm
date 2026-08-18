@@ -28,7 +28,7 @@ class OpenClawGatewayManager:
         *,
         state_dir: str | Path | None = None,
         host: str = "127.0.0.1",
-        startup_timeout_s: float = 300.0,
+        startup_timeout_s: float = 600.0,
         log_path: str | Path | None = None,
     ):
         self.repo_path = Path(repo_path or os.environ.get("OPENCLAW_REPO", ""))
