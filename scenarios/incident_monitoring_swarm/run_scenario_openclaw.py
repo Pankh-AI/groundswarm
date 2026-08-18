@@ -8,6 +8,16 @@ identity/session, and the before/after is measured, not asserted.
 Requires OPENCLAW_REPO (path to a built OpenClaw checkout) and
 OPENCLAW_GATEWAY_TOKEN (the dev profile's gateway.auth.token) in the
 environment -- deliberately not hardcoded here.
+
+Also the real entry point for running this swarm through a Codex CLI or
+Claude Code CLI harness instead of local Ollama (see
+ops/openclaw_config.py): set GROUNDSWARM_OPENCLAW_HARNESS to "codex" or
+"claude_cli" (default "direct" -- whatever the Gateway is already
+configured for). "codex" additionally needs OPENAI_API_KEY set in the
+environment and GROUNDSWARM_HARNESS_OPTION_OPENAI_MODEL set to a
+catalog-known "openai/<model>" ref; "claude_cli" needs nothing extra beyond
+this host already having run `claude auth login` once. E.g.:
+    GROUNDSWARM_OPENCLAW_HARNESS=claude_cli python run_scenario_openclaw.py
 """
 from __future__ import annotations
 
@@ -17,10 +27,12 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "src"))
 
-from groundswarm.ops.openclaw_manager import OpenClawGatewayManager, OpenClawGatewayError
+from groundswarm.ops.openclaw_config import OpenClawConfigError
+from groundswarm.ops.openclaw_manager import OpenClawGatewayError
 from groundswarm.ops.feedback import CAUTION_THRESHOLD, compute_reliability, caution_note
+from groundswarm.runtime_config import RuntimeConfig, collect_harness_options
 from groundswarm.workers.base import WorkerTask
-from groundswarm.workers.openclaw_worker import OpenClawWorker
+from groundswarm.workers.factory import worker_session
 from groundswarm.orchestrator.orchestrator import Orchestrator
 from groundswarm.verifier.verifier import Verifier, VerificationResult
 
@@ -39,11 +51,6 @@ def _summarize(label: str, verifications: list[VerificationResult]) -> None:
 
 
 def main() -> int:
-    token = os.environ.get("OPENCLAW_GATEWAY_TOKEN", "").strip()
-    if not token:
-        print("OPENCLAW_GATEWAY_TOKEN is not set. Export the dev profile's gateway.auth.token first.")
-        return 2
-
     tasks = [
         WorkerTask(
             worker_id=w,
@@ -53,17 +60,22 @@ def main() -> int:
         for w in WORKERS
     ]
 
-    try:
-        manager = OpenClawGatewayManager()
-    except OpenClawGatewayError as exc:
-        print(f"Could not construct the Gateway manager: {exc}")
-        return 2
+    # worker_backend stays hardcoded "openclaw" -- this script's whole
+    # purpose is demonstrating the OpenClaw-managed path, so a stray
+    # GROUNDSWARM_WORKER_BACKEND left set from an unrelated run must not be
+    # able to silently downgrade it to a plain Ollama run. Only the harness
+    # (which OpenClaw-side execution path to configure the Gateway for)
+    # comes from the environment.
+    config = RuntimeConfig(
+        worker_backend="openclaw",
+        openclaw_harness=os.environ.get("GROUNDSWARM_OPENCLAW_HARNESS", "direct").strip().lower(),
+        harness_options=collect_harness_options(os.environ),
+    )
 
-    print("Starting OpenClaw Gateway (managed by Groundswarm)...")
+    print(f"Starting OpenClaw Gateway (managed by Groundswarm, harness={config.openclaw_harness!r})...")
     try:
-        with manager:
-            print(f"Gateway ready at {manager.base_url}")
-            worker = OpenClawWorker(base_url=manager.base_url, token=token)
+        with worker_session(config) as worker:
+            print(f"Gateway ready at {worker.base_url}")
             orchestrator = Orchestrator(worker=worker)
             verifier = Verifier()
 
@@ -131,6 +143,9 @@ def main() -> int:
     except OpenClawGatewayError as exc:
         print(f"Gateway lifecycle error: {exc}")
         return 1
+    except OpenClawConfigError as exc:
+        print(f"Could not configure the {config.openclaw_harness!r} harness: {exc}")
+        return 2
 
 
 if __name__ == "__main__":
