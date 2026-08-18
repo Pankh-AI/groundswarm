@@ -458,6 +458,37 @@ together). Isolating that needs a controlled fresh-session A/B, WITH vs. WITHOUT
 follow-up, not claimed here.</p>
 </div>
 
+<div class="card">
+<div class="meta">ADR-020 <span class="tag t-dec">Decided: built and measured</span></div>
+<h2>Add CLI-backed worker execution: route extraction through a real Codex CLI or Claude Code CLI subprocess, not just local Ollama</h2>
+OpenClaw already supports routing its agent execution through a real Codex CLI or Claude Code CLI
+subprocess as config-only harness switches (<code>plugins.entries.codex.enabled</code> + an
+<code>openai/&lt;model&gt;</code> ref for Codex; a plain <code>claude-cli/&lt;model&gt;</code> model
+ref for Claude, which needs no OpenClaw-side secret at all since it reads the host's own
+<code>claude auth login</code> credentials directly). Three new modules
+(<code>runtime_config.py</code>, <code>ops/openclaw_config.py</code>, <code>workers/factory.py</code>)
+give Groundswarm a single construction point that mutates OpenClaw's own config (via its first-party
+<code>config patch --stdin</code> CLI, never a hand-rolled deep-merge) before starting the Gateway.
+Full writeup: <a href="../ops/cli-harness-calibration.html">CLI harness calibration</a>.
+<p><b>Why:</b> the user wanted a way to get faster/higher-quality extraction than the 6GB laptop RTX
+3060 using credits/subscriptions already available on this host, without Groundswarm building its
+own second agent runtime &mdash; OpenClaw already had the capability, just not wired up. Both
+Codex and Claude Code are supported, and Groundswarm deliberately owns writing the OpenClaw-side
+config itself (not a manual runbook step), an accepted, understood increase in blast radius: this
+tooling now mutates a separate application's config, guarded by a stopped-Gateway precondition and a
+dry-run-before-apply check on every call.</p>
+<p><b>Why decided-and-built, not left as a design note:</b> both harnesses were verified against real
+backends, not simulated &mdash; <code>claude_cli</code>: 5 workers, 64 claims, 100% confirmed, 197,652
+tokens/256.5s; <code>codex</code> under real ChatGPT-subscription auth (no API key at all): 5 workers,
+45 claims, 100% confirmed, 135,112 tokens/91.6s. Getting there surfaced two real bugs no design review
+would have caught: both timeout defaults were tuned for a fast path and too tight for the model-catalog
+lookup a first-time harness switch actually performs (measured 210s and 478.8s against original 180s/300s
+caps, now 300s/600s), and the codex API-key SecretRef was written unconditionally even under
+subscription auth, which OpenClaw's own dry-run then eagerly resolved and rejected outright &mdash; fixed
+with an explicit <code>openai_auth_mode: "subscription"</code> option rather than papering over it.
+</p>
+</div>
+
 </div>
 </body>
 </html>

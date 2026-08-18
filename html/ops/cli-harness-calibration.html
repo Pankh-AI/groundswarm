@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Groundswarm &mdash; CLI-backed worker execution: Codex/Claude Code harnesses, calibrated live</title>
+<style>
+  :root{--bg:#0f1115;--fg:#e6e9ef;--dim:#98a2b3;--card:#171a21;--line:#252a34;
+        --good:#3fb950;--bad:#f85149;--warn:#d29922;--acc:#58a6ff}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--fg);
+       font:15px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+  .wrap{max-width:1080px;margin:0 auto;padding:28px 20px 80px}
+  h1{font-size:24px;margin:0 0 4px} h2{font-size:17px;margin:30px 0 8px;color:var(--acc)}
+  .dim{color:var(--dim)} .small{font-size:13px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:16px 18px;margin:14px 0}
+  table{border-collapse:collapse;width:100%;font-size:13.5px;margin:10px 0}
+  .scroll{overflow-x:auto}
+  th,td{border-bottom:1px solid var(--line);padding:8px 9px;text-align:left;vertical-align:top}
+  th{color:var(--dim);font-weight:600;font-size:12px;text-transform:uppercase;letter-spacing:.03em}
+  code{background:#0b0d11;padding:1px 5px;border-radius:4px;font-size:13px}
+  a{color:var(--acc)}
+  .back{font-size:13px;margin-bottom:18px;display:inline-block}
+  .lead{font-size:15.5px;border-left:3px solid var(--acc);padding-left:14px;margin:16px 0}
+  .tag{display:inline-block;padding:2px 8px;border-radius:99px;font-size:11.5px;font-weight:700}
+  .t-done{background:#123018;color:var(--good)} .t-fail{background:#3a1418;color:var(--bad)}
+  .t-warn{background:#33280a;color:var(--warn)}
+  .good{color:var(--good)} .bad{color:var(--bad)} .warn{color:var(--warn)}
+  ol.steps li{margin:6px 0}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<a class="back" href="../index.html">&larr; Groundswarm hub</a>
+<h1>CLI-backed worker execution &mdash; Codex/Claude Code harnesses, calibrated live</h1>
+<div class="dim">ADR-020's supporting record: routing worker extraction through a real Codex CLI or Claude Code CLI subprocess (via OpenClaw's own harness config) instead of the 6GB laptop Ollama GPU, plus two real config-mutation bugs live calibration found and fixed.</div>
+
+<div class="lead">
+<b>Result: both harnesses work end to end against real backends, no simulation.</b> claude_cli:
+5 workers, 64 claims, 100% confirmed, 197,652 tokens, 256.5s. codex (ChatGPT-subscription auth, no
+API key): 5 workers, 45 claims, 100% confirmed, 135,112 tokens, 91.6s. Getting there surfaced and
+fixed two real bugs in the config-mutation layer itself, not just in the harness code &mdash; both
+are documented below rather than smoothed into "it just worked."
+</div>
+
+<h2>What was built</h2>
+<div class="card small">
+<table><thead><tr><th>Module</th><th>Owns</th></tr></thead><tbody>
+<tr><td><code>ops/openclaw_config.py</code></td><td><code>apply_harness()</code>: a thin, idempotent
+wrapper around OpenClaw's own <code>config patch --stdin [--dry-run] [--json]</code> CLI &mdash;
+validates, then applies, never hand-rolls the deep-merge/backup logic OpenClaw's CLI already owns
+(file locking, atomic writes, 5-deep backup rotation). Reads <code>openclaw.json</code> directly to
+skip the subprocess entirely when the requested harness already matches (no-op, no call). Never
+writes a plaintext secret: the codex harness's API key is stored as an OpenClaw <code>SecretRef</code>
+(<code>{"source":"env","provider":"default","id":openai_api_key_env}</code>), resolved by OpenClaw
+itself from an environment variable Groundswarm's own process already forwards to the Gateway
+subprocess.</td></tr>
+<tr><td><code>runtime_config.py</code></td><td><code>RuntimeConfig</code>: stdlib-only
+backend/harness selection (<code>worker_backend</code>: ollama|openclaw;
+<code>openclaw_harness</code>: direct|codex|claude_cli), env-var fallback at construction time, plus
+a generic <code>harness_options</code> passthrough bag so a future harness never needs a change
+here.</td></tr>
+<tr><td><code>workers/factory.py</code></td><td><code>worker_session()</code>: the single
+construction point. For <code>openclaw</code> it calls <code>apply_harness()</code>
+<b>unconditionally</b>, including for <code>"direct"</code> &mdash; the harness-switching bugfix
+baked into the design from the start: a gated call would let a Gateway a prior run left on
+codex/claude_cli silently stay that way forever the next time someone asks for "direct."</td></tr>
+</tbody></table>
+<p>Migrated: <code>scenarios/incident_monitoring_swarm/run_scenario_openclaw.py</code> now builds a
+<code>RuntimeConfig</code> from env instead of hand-constructing
+<code>OpenClawGatewayManager</code>/<code>OpenClawWorker</code> directly, making
+<code>GROUNDSWARM_OPENCLAW_HARNESS=codex</code> / <code>=claude_cli</code> the real entry point.
+54 new tests (<code>test_openclaw_config.py</code>, <code>test_runtime_config.py</code>,
+<code>test_worker_factory.py</code>); full suite 74/74.</p>
+</div>
+
+<h2>Two real bugs, found only because calibration was run live</h2>
+<div class="card small">
+<ol class="steps">
+<li><b class="warn">Both timeout defaults were too tight for a real model-catalog lookup.</b>
+<code>apply_harness()</code>'s dry-run/apply round trip measured 210s against a 180s cap for
+<code>claude_cli</code>; <code>OpenClawGatewayManager</code>'s startup probe (which waits for the
+<i>second</i> <code>"[gateway] ready"</code> log line &mdash; full plugin+channel init, not the bare
+HTTP listener the first line signals) measured ~206s against a 300s cap. Both bumped (180s&rarr;300s,
+300s&rarr;600s). The next live attempt against <code>codex</code> then hit the new 300s cap anyway
+&mdash; a first-time catalog validation of an unfamiliar <code>openai/&lt;model&gt;</code> ref under a
+real subscription account took <b>478.8s</b>, confirmed directly in the dry-run call's own elapsed
+time. <code>apply_harness()</code>'s <code>timeout_s</code> default is now 600s.</li>
+<li><b class="warn">The API-key SecretRef was written even when nothing needed it, and OpenClaw's own
+dry-run eagerly resolves every SecretRef it's given.</b> A subscription-authenticated <code>codex</code>
+CLI (<code>codex login</code> with a ChatGPT account, no <code>OPENAI_API_KEY</code> anywhere in the
+environment) got the whole patch rejected outright &mdash; <code>"Environment variable OPENAI_API_KEY
+is missing or empty"</code> &mdash; even though nothing about running codex through that CLI needs the
+variable. Root cause confirmed live, not guessed: <code>_patch_for("codex", ...)</code>
+unconditionally included the <code>apiKey</code> SecretRef, and <code>config patch --dry-run</code>
+resolves every SecretRef it's handed before validating anything else. Fix: a new
+<code>openai_auth_mode: "api-key" | "subscription"</code> parameter; <code>"subscription"</code> skips
+the <code>apiKey</code> patch entirely, relying on OpenClaw's own auth-requirement matrix already
+accepting a bare <code>"chatgpt"</code> account whenever <code>authRequirement</code> is left unset
+(which this patch never sets).</li>
+</ol>
+</div>
+
+<h2>Calibration results</h2>
+<div class="scroll"><table><thead>
+<tr><th>Harness</th><th>Auth</th><th>Workers</th><th>Claims</th><th>Confirmed</th><th>Tokens</th><th>Wall time</th></tr>
+</thead><tbody>
+<tr><td>claude_cli</td><td>host <code>claude auth login</code> (no OpenClaw-side secret written at all)</td>
+<td>5</td><td>64</td><td class="good">100%</td><td>197,652</td><td>256.5s</td></tr>
+<tr><td>codex</td><td>ChatGPT subscription (<code>openai_auth_mode="subscription"</code>, no <code>OPENAI_API_KEY</code>)</td>
+<td>5</td><td>45</td><td class="good">100%</td><td>135,112</td><td>91.6s</td></tr>
+</tbody></table></div>
+<div class="card small">
+The codex run's own log: 5 workers dispatched (<code>meridian_cache</code> 11 claims,
+<code>anchor_cdn</code> 6, <code>solace_queue</code> 7, <code>ridgeline_auth</code> 9,
+<code>cobalt_storage</code> 12 &mdash; 45 total), all 45 verified <code>confirmed</code>, 0 rejected, 0
+unverified. The <a href="./openclaw-feedback-loop.html">feedback loop</a> (ADR-019) ran against this
+batch too: 0 of 5 workers fell below the 80% caution threshold, correctly reported as "nothing to act
+on this run" rather than forced into a false finding.
+</div>
+
+<h2>What's still open</h2>
+<div class="card small">
+<ul>
+<li><b>Not yet measured: whether either CLI harness is actually faster/better than local Ollama for
+this workload.</b> Both harnesses are proven to work and their own cost is measured (above), but the
+comparison that was the actual point of building this &mdash; CLI-backed vs. the 6GB laptop GPU, on
+the same source set &mdash; hasn't been run side by side yet.</li>
+<li><b><code>Orchestrator.synth_client</code> stays Ollama-only</b> regardless of worker backend, so
+routing extraction through <code>codex</code>/<code>claude_cli</code> upgrades claim extraction only;
+briefing synthesis is still produced by the weakest model in the pipeline. Flagged as a real gap in
+the original design, not fixed here &mdash; see the plan's Phase 2 roadmap.</li>
+<li>No concurrency ownership around the shared <code>~/.openclaw-dev</code> state dir: <code>apply_harness()</code>
+guards against mutating a <i>running</i> Gateway, but not against two concurrent Groundswarm sessions
+racing different harness requests against the same profile. Fine for single-session use, a real gap
+otherwise.</li>
+<li>Migrating Claude-CLI credentials into the separate mainline <code>anthropic</code> provider profile
+is explicitly out of scope &mdash; its only non-interactive route has no <code>--dry-run</code> and
+unverified safety against an already-onboarded profile.</li>
+</ul>
+</div>
+
+</div>
+</body>
+</html>
